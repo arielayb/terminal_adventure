@@ -54,6 +54,7 @@ fn main () {
     FrameTimeDiagnosticsPlugin,
     TerminalPlugin))
     .add_systems(Startup, setup)
+    .add_systems(Update, bevy::window::close_on_esc)
     .insert_resource(ClearColor(Color::BLACK))
     .run();
 }
