@@ -4,7 +4,7 @@ use bevy::diagnostic::LogDiagnosticsPlugin;
 use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
 use bevy_ascii_terminal::{prelude::*, TiledCameraBundle};
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct GameTerminal;
 
 pub const VIEWPORT_SIZE: [u32;2] = [80,40];
@@ -16,7 +16,10 @@ fn setup(mut commands: Commands) {
     let term_y = VIEWPORT_SIZE[1] as u32 / 2 - GAME_SIZE[1] as u32 / 2; 
     let term = Terminal::new([20, term_y]).with_border(Border::single_line());
  
-    let term_bundle = TerminalBundle::from(term).with_size([GAME_SIZE[0], GAME_SIZE[1] + 2]);
+    let mut term_bundle = TerminalBundle::from(term).with_size([GAME_SIZE[0], GAME_SIZE[1] + 2]);
+    term_bundle.terminal.put_string([36, 10], "New  Game".fg(Color::WHITE));
+    term_bundle.terminal.put_string([35, 8], " Load Save".fg(Color::WHITE));
+    term_bundle.terminal.put_string([36, 6], "Exit".fg(Color::WHITE));
 
     commands.spawn(term_bundle).insert(GameTerminal);
 
