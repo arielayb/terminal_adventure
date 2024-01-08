@@ -3,9 +3,9 @@
     "configurations": [
         {
             "name": "Launch",
-            "type": "cppvsdbg",
+            "type": "lldb",
             "request": "launch",
-            "program": "${workspaceRoot}/target/debug/terminal_overload.exe",
+            "program": "${workspaceRoot}/target/debug/terminal_adventure",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",

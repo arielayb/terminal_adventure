@@ -15,7 +15,7 @@ impl Plugin for SelectionPlugin{
 
 fn update_cursor_position(mut query: Query<&mut Transform>, time: Res<Time>){
     for mut position in query.iter_mut(){
-        position.translation.x = 1.;
-        position.translation.y = 1.;
+        // position.translation.x = 1.;
+        // position.translation.y = 1.;
     }
 }
