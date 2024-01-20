@@ -1,67 +1,125 @@
-use bevy::prelude::*;
-use bevy_ascii_terminal::{prelude::*, TiledCameraBundle};
+use bevy::
+{
+    core_pipeline::{
+        bloom::{BloomCompositeMode, BloomSettings},
+        tonemapping::Tonemapping,
+    },
+    prelude::*,
+    sprite::MaterialMesh2dBundle,
+};
 
-pub const VIEWPORT_SIZE: [u32;2] = [80,40];
-pub const UI_SIZE: [u32;2] = [VIEWPORT_SIZE[0],8];
-pub const GAME_SIZE: [u32;2] = [VIEWPORT_SIZE[0], VIEWPORT_SIZE[1] - UI_SIZE[1]];
+use crate::states::GameState;
 
 pub struct MainMenu;
-impl Plugin for MainMenu{
+impl Plugin for MainMenu {
     fn build(&self, app: &mut App) {
-        app
-        .add_plugins(TerminalPlugin)
-        .add_systems(Startup, title_scene)
-        .add_systems(Update, selector);
+        app.add_systems(OnEnter(GameState::Begin), title_scene)
+            .add_systems(Update, selector);
     }
 }
 
-struct Cursor {
-    pub glyph: char,
-    pub fg_color: Color,
-    pub bg_color: Color,
+#[derive(Component)]
+enum Selection {
+    Top,
+    Middle,
+    Bottom,
 }
 
-fn title_scene(mut commands: Commands) {
-    // Create the terminal
-    let term_y = VIEWPORT_SIZE[1] as u32 / 2 - GAME_SIZE[1] as u32 / 2; 
-    let term = Terminal::new([20, term_y]).with_border(Border::single_line());
- 
-    let mut term_bundle = TerminalBundle::from(term).with_size([GAME_SIZE[0], GAME_SIZE[1] + 2]);
+#[derive(Component)]
+struct Options {
+    top_sel: bool,
+    mid_Sel: bool,
+    bot_Sel: bool,
+}
 
-    term_bundle.terminal.put_tile([33, 10], Tile { glyph: '>', fg_color: Color::WHITE, bg_color: Color::BLACK, });
-    term_bundle.terminal.put_string([36, 10], "New  Game".fg(Color::WHITE));
-    term_bundle.terminal.put_string([35, 8], " Load Save".fg(Color::WHITE));
-    term_bundle.terminal.put_string([36, 6], "Exit".fg(Color::WHITE));
-
-    commands.spawn(term_bundle);
-
-    let mut terminal = Terminal::new([20,3]).with_border(Border::single_line());
-    // Draw title to the terminal
-    terminal.put_string([1, 1], "Terminal Overload".fg(Color::WHITE));
-
-    commands.spawn(
-        // Spawn the terminal bundle from our terminal
-        TerminalBundle::from(terminal));
-
-    let totalx = GAME_SIZE[0];
-    let totaly = GAME_SIZE[1] + UI_SIZE[1];
-
-    commands.spawn(TiledCameraBundle::new().with_tile_count([totalx, totaly]));
+fn title_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let text_title_alignment = TextAlignment::Center;
     
-}
-
-fn selector(keys: Res<Input<KeyCode>>, mut q: Query<&mut Terminal>) {
-
-    let mut term = match q.get_single_mut() {
-        Ok(term) => term,
-        Err(_) => return,
+    let font = asset_server.load("fonts/alphacorsa.personal-use.ttf");
+    let text_style = TextStyle {
+        font: font.clone(),
+        font_size: 60.0,
+        color: Color::WHITE,
     };
 
-    if keys.just_pressed(KeyCode::S) || keys.just_pressed(KeyCode::Down){
-        term.clear();
+    commands.spawn((
+        Camera2dBundle {
+            camera: Camera {
+                hdr: true, // 1. HDR is required for bloom
+                ..default()
+            },
+            tonemapping: Tonemapping::TonyMcMapface, // 2. Using a tonemapper that desaturates to white is recommended
+            ..default()
+        },
+        BloomSettings::default(), // 3. Enable bloom for the camera
+    ));
+    
+    commands.spawn((SpriteBundle {
+        texture: asset_server.load("right.png"),
+        transform: Transform::from_xyz(-280., -150., 0.),
+        ..default()
+    },
+    Selection::Top, Options{top_sel: false, mid_Sel: false, bot_Sel: false}));
 
-        term.put_tile([33, 8], Tile { glyph: '>', fg_color: Color::WHITE, bg_color: Color::BLACK, });
+    commands.spawn(
+Text2dBundle {
+        text: Text::from_section("Terminal Overlord", text_style.clone()),
+        transform: Transform::from_xyz(5., 100., 0.),
+        ..default()
+    });
+
+    commands.spawn(
+Text2dBundle {
+        text: Text::from_section("New Game", text_style.clone()),
+        transform: Transform::from_xyz(-20., -150., 0.),
+        ..default()
+    });
+
+    commands.spawn(
+Text2dBundle {
+        text: Text::from_section("Load Save", text_style.clone()),
+        transform: Transform::from_xyz(-20., -250., 0.),
+        ..default()
+    });
+
+    commands.spawn(
+Text2dBundle {
+        text: Text::from_section("Exit", text_style.clone()),
+        transform: Transform::from_xyz(-148., -350., 0.),
+        ..default()
+    });
+}
+
+fn selector(keys: Res<Input<KeyCode>>, mut sprite_position: Query<(&mut Options, &mut Selection, &mut Transform)>) {
+    for (mut opt, mut logo, mut transform) in &mut sprite_position {
+        match *logo{
+            Selection::Top => transform.translation = Vec3{x:-280., y:-150., z:0.},
+            Selection::Middle => transform.translation = Vec3{x:-280., y:-250., z:0.},
+            Selection::Bottom => transform.translation = Vec3{x:-280., y:-350., z:0.},    
+        }
+
+        if (keys.just_pressed(KeyCode::W) || keys.just_pressed(KeyCode::Up)) && !opt.top_sel {
+            *logo = Selection::Top;
+            opt.top_sel = true;
+            opt.mid_Sel = false;
+            opt.bot_Sel = false;
+        }else if (keys.just_pressed(KeyCode::S) || keys.just_pressed(KeyCode::Down)) && !opt.mid_Sel { 
+            *logo = Selection::Middle;
+            opt.mid_Sel = true;
+            opt.top_sel = false;
+            opt.bot_Sel = false;
+            println!("mid option is selected!");
+        
+        }else if (keys.just_pressed(KeyCode::S) || keys.just_pressed(KeyCode::Down)) && !opt.bot_Sel {
+            *logo = Selection::Bottom;
+            opt.bot_Sel = true;
+            opt.mid_Sel = true;
+            opt.top_sel = false;
+            println!("bottom option is selected!");
+        }
+   
+   
     }
-
-
+   
+            
 }
