@@ -101,19 +101,18 @@ fn selector(keys: Res<Input<KeyCode>>, mut sprite_position: Query<(&mut Options,
             opt.top_sel = true;
             opt.mid_sel = false;
             opt.bot_sel = false;
+            
         }else if (keys.just_pressed(KeyCode::S) || keys.just_pressed(KeyCode::Down)) && !opt.mid_sel { 
             *logo = Selection::Middle;
             opt.mid_sel = true;
             opt.top_sel = false;
             opt.bot_sel = false;
-            println!("mid option is selected!");
         
         }else if (keys.just_pressed(KeyCode::S) || keys.just_pressed(KeyCode::Down)) && !opt.bot_sel {
             *logo = Selection::Bottom;
             opt.bot_sel = true;
             opt.mid_sel = true;
             opt.top_sel = false;
-            println!("bottom option is selected!");
         }
    
    
