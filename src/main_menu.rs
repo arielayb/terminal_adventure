@@ -28,13 +28,11 @@ enum Selection {
 #[derive(Component)]
 struct Options {
     top_sel: bool,
-    mid_Sel: bool,
-    bot_Sel: bool,
+    mid_sel: bool,
+    bot_sel: bool,
 }
 
-fn title_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let text_title_alignment = TextAlignment::Center;
-    
+fn title_scene(mut commands: Commands, asset_server: Res<AssetServer>) {    
     let font = asset_server.load("fonts/alphacorsa.personal-use.ttf");
     let text_style = TextStyle {
         font: font.clone(),
@@ -59,7 +57,7 @@ fn title_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
         transform: Transform::from_xyz(-280., -150., 0.),
         ..default()
     },
-    Selection::Top, Options{top_sel: false, mid_Sel: false, bot_Sel: false}));
+    Selection::Top, Options{top_sel: false, mid_sel: false, bot_sel: false}));
 
     commands.spawn(
 Text2dBundle {
@@ -101,19 +99,19 @@ fn selector(keys: Res<Input<KeyCode>>, mut sprite_position: Query<(&mut Options,
         if (keys.just_pressed(KeyCode::W) || keys.just_pressed(KeyCode::Up)) && !opt.top_sel {
             *logo = Selection::Top;
             opt.top_sel = true;
-            opt.mid_Sel = false;
-            opt.bot_Sel = false;
-        }else if (keys.just_pressed(KeyCode::S) || keys.just_pressed(KeyCode::Down)) && !opt.mid_Sel { 
+            opt.mid_sel = false;
+            opt.bot_sel = false;
+        }else if (keys.just_pressed(KeyCode::S) || keys.just_pressed(KeyCode::Down)) && !opt.mid_sel { 
             *logo = Selection::Middle;
-            opt.mid_Sel = true;
+            opt.mid_sel = true;
             opt.top_sel = false;
-            opt.bot_Sel = false;
+            opt.bot_sel = false;
             println!("mid option is selected!");
         
-        }else if (keys.just_pressed(KeyCode::S) || keys.just_pressed(KeyCode::Down)) && !opt.bot_Sel {
+        }else if (keys.just_pressed(KeyCode::S) || keys.just_pressed(KeyCode::Down)) && !opt.bot_sel {
             *logo = Selection::Bottom;
-            opt.bot_Sel = true;
-            opt.mid_Sel = true;
+            opt.bot_sel = true;
+            opt.mid_sel = true;
             opt.top_sel = false;
             println!("bottom option is selected!");
         }
