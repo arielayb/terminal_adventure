@@ -13,7 +13,7 @@ use crate::states::GameState;
 pub struct MainMenu;
 impl Plugin for MainMenu {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::Begin), title_scene)
+        app.add_systems(OnEnter(GameState::TitleMenu), title_scene)
             .add_systems(Update, selector);
     }
 }
@@ -101,7 +101,7 @@ fn selector(keys: Res<Input<KeyCode>>, mut sprite_position: Query<(&mut Options,
             opt.top_sel = true;
             opt.mid_sel = false;
             opt.bot_sel = false;
-            
+
         }else if (keys.just_pressed(KeyCode::S) || keys.just_pressed(KeyCode::Down)) && !opt.mid_sel { 
             *logo = Selection::Middle;
             opt.mid_sel = true;
