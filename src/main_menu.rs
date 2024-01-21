@@ -63,7 +63,7 @@ fn title_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn(
 Text2dBundle {
-        text: Text::from_section("Terminal Overlord", text_style.clone()),
+        text: Text::from_section("|- TERMINAL OVERLORD -|", text_style.clone()),
         transform: Transform::from_xyz(5., 100., 0.),
         ..default()
     });
