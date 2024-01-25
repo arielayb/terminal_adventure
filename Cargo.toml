@@ -1,5 +1,6 @@
+workspace = { members = ["automated_tests"] }
 [package]
-name = "terminal_overload"
+name = "terminal_overlord"
 author = "Ariel Aybar"
 version = "0.1.0"
 edition = "2021"
