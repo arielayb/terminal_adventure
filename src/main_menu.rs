@@ -139,7 +139,12 @@ fn selector(
             opt.mid_sel = true;
             opt.top_sel = false;
         }
-
-        //assert_nq!(*logo, null);
     }
+}
+
+#[test]
+fn spawn_cursor(){
+    let mut app = App::new();
+
+    app.init_resource();
 }
