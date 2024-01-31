@@ -6,11 +6,24 @@
             "request": "launch",
             "name":"terminal overload",
             "cargo": {
-                "args": [
-                    "run"
-                ]
+                "args": ["run"]
             },
-            "program": "${workspaceRoot}/target/debug/terminal_overload",
+            "program": "${workspaceRoot}/target/debug/terminal_overlord",
+            "args": [],
+            "cwd": "${workspaceRoot}",
+            "env": {
+                "LD_LIBRARY_PATH": "${workspaceFolder}/target/debug/deps:${userHome}/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib"
+            },
+            "console": "externalTerminal"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name":"unit test",
+            "cargo": {
+                "args": ["test", "--no-run"]
+            },
+            "program": "${workspaceRoot}/target/debug/terminal_overlord",
             "args": [],
             "cwd": "${workspaceRoot}",
             "env": {

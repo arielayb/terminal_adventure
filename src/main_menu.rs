@@ -2,9 +2,7 @@ use bevy::{
     core_pipeline::{
         bloom::{BloomCompositeMode, BloomSettings},
         tonemapping::Tonemapping,
-    },
-    prelude::*,
-    sprite::MaterialMesh2dBundle,
+    }, ecs::event::Events, input::InputSystem, prelude::*, sprite::MaterialMesh2dBundle
 };
 
 use crate::states::GameState;
@@ -146,5 +144,14 @@ fn selector(
 fn spawn_cursor(){
     let mut app = App::new();
 
-    app.init_resource();
+    app.add_systems(OnEnter(GameState::TitleMenu), title_scene);
+    app.add_systems(Update, selector);
+
+    let mut input = Input::<KeyCode>::default();
+    input.press(KeyCode::S);
+    app.insert_resource(input);
+
+    app.update();
+
+    assert_eq!(app.world.query::<&Selection>().iter(&app.world).len(), 1);
 }
