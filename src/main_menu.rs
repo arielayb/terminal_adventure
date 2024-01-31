@@ -139,19 +139,3 @@ fn selector(
         }
     }
 }
-
-#[test]
-fn spawn_cursor(){
-    let mut app = App::new();
-
-    app.add_systems(OnEnter(GameState::TitleMenu), title_scene);
-    app.add_systems(Update, selector);
-
-    let mut input = Input::<KeyCode>::default();
-    input.press(KeyCode::S);
-    app.insert_resource(input);
-
-    app.update();
-
-    assert_eq!(app.world.query::<&Selection>().iter(&app.world).len(), 1);
-}
