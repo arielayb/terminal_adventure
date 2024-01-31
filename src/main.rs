@@ -6,8 +6,8 @@ use bevy::window::*;
 mod debug;
 mod main_menu;
 mod player;
-mod selection;
 mod states;
+mod board;
 
 fn main() {
     App::new()
@@ -28,9 +28,10 @@ fn main() {
             LogDiagnosticsPlugin::default(),
             FrameTimeDiagnosticsPlugin,
         ))
+        .insert_resource(Msaa::Off)
         .add_state::<states::GameState>()
         .add_plugins(main_menu::MainMenu)
-        .add_plugins(selection::SelectionPlugin)
+        .add_plugin(board::BoardPlugin)
         // .add_plugins(debug::DebugPlugin)
         .add_systems(Update, bevy::window::close_on_esc)
         .insert_resource(ClearColor(Color::BLACK))
