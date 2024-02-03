@@ -2,7 +2,11 @@ use bevy::{
     core_pipeline::{
         bloom::{BloomCompositeMode, BloomSettings},
         tonemapping::Tonemapping,
-    }, ecs::event::Events, input::InputSystem, prelude::*, sprite::MaterialMesh2dBundle
+    },
+    ecs::event::Events,
+    input::InputSystem,
+    prelude::*,
+    sprite::MaterialMesh2dBundle,
 };
 
 use crate::states::GameState;
@@ -57,7 +61,7 @@ fn title_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
         Selection::Top,
         Options {
-            top_sel: false,
+            top_sel: true,
             mid_sel: false,
             bot_sel: false,
         },
@@ -124,6 +128,7 @@ fn selector(
             opt.bot_sel = false;
         } else if (keys.just_pressed(KeyCode::S) || keys.just_pressed(KeyCode::Down))
             && !opt.mid_sel
+            && !opt.bot_sel
         {
             *logo = Selection::Middle;
             opt.mid_sel = true;
@@ -134,8 +139,20 @@ fn selector(
         {
             *logo = Selection::Bottom;
             opt.bot_sel = true;
-            opt.mid_sel = true;
+            opt.mid_sel = false;
             opt.top_sel = false;
+        }
+
+        if opt.top_sel && keys.just_pressed(KeyCode::Return) {
+            info!("the enter key was pressed for new game!");
+        }
+
+        if opt.mid_sel && keys.just_pressed(KeyCode::Return) {
+            info!("the enter key was pressed for load game!");
+        }
+
+        if opt.bot_sel && keys.just_pressed(KeyCode::Return) {
+            info!("the enter key was pressed for exit game!");
         }
     }
 }
