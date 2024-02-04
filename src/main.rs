@@ -3,10 +3,7 @@ use bevy::diagnostic::LogDiagnosticsPlugin;
 use bevy::prelude::*;
 use bevy::window::*;
 
-mod assets;
-mod board;
 mod debug;
-mod graphics;
 mod main_menu;
 mod player;
 mod states;
@@ -32,7 +29,6 @@ fn main() {
         ))
         .add_state::<states::GameState>()
         .add_plugins(main_menu::MainMenu)
-        .add_plugins(graphics::GraphicsPlugin)
         // .add_plugins(debug::DebugPlugin)
         .add_systems(Update, bevy::window::close_on_esc)
         .insert_resource(ClearColor(Color::BLACK))

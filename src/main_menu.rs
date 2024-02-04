@@ -1,3 +1,4 @@
+use crate::states::*;
 use bevy::{
     core_pipeline::{
         bloom::{BloomCompositeMode, BloomSettings},
@@ -8,8 +9,7 @@ use bevy::{
     prelude::*,
     sprite::MaterialMesh2dBundle,
 };
-
-use crate::states::*;
+use std::process;
 
 pub struct MainMenu;
 impl Plugin for MainMenu {
@@ -73,41 +73,41 @@ fn title_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
         OnMenuScreen,
     ));
 
-    commands.spawn(
+    commands.spawn((
         Text2dBundle {
             text: Text::from_section("|- TERMINAL OVERLORD -|", text_style.clone()),
             transform: Transform::from_xyz(5., 100., 0.),
             ..default()
         },
         OnMenuScreen,
-    );
+    ));
 
-    commands.spawn(
+    commands.spawn((
         Text2dBundle {
             text: Text::from_section("New Game", text_style.clone()),
             transform: Transform::from_xyz(-20., -150., 0.),
             ..default()
         },
         OnMenuScreen,
-    );
+    ));
 
-    commands.spawn(
+    commands.spawn((
         Text2dBundle {
             text: Text::from_section("Load Save", text_style.clone()),
             transform: Transform::from_xyz(-20., -250., 0.),
             ..default()
         },
         OnMenuScreen,
-    );
+    ));
 
-    commands.spawn(
+    commands.spawn((
         Text2dBundle {
             text: Text::from_section("Exit", text_style.clone()),
             transform: Transform::from_xyz(-148., -350., 0.),
             ..default()
         },
         OnMenuScreen,
-    );
+    ));
 }
 
 fn selector(
@@ -171,6 +171,7 @@ fn selector(
 
         if opt.bot_sel && keys.just_pressed(KeyCode::Return) {
             info!("the enter key was pressed for exit game!");
+            process::exit(1);
         }
     }
 }
