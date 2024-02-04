@@ -9,13 +9,14 @@ use bevy::{
     sprite::MaterialMesh2dBundle,
 };
 
-use crate::states::GameState;
+use crate::states::*;
 
 pub struct MainMenu;
 impl Plugin for MainMenu {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::TitleMenu), title_scene)
-            .add_systems(Update, selector);
+            .add_systems(Update, selector)
+            .add_systems(OnExit(GameState::TitleMenu), despawn_screen::<OnMenuScreen>);
     }
 }
 
@@ -32,6 +33,9 @@ struct Options {
     mid_sel: bool,
     bot_sel: bool,
 }
+
+#[derive(Component)]
+struct OnMenuScreen;
 
 fn title_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
     let font = asset_server.load("fonts/alphacorsa.personal-use.ttf");
@@ -50,7 +54,8 @@ fn title_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
             tonemapping: Tonemapping::TonyMcMapface, // 2. Using a tonemapper that desaturates to white is recommended
             ..default()
         },
-        BloomSettings::default(), // 3. Enable bloom for the camera
+        BloomSettings::default(),
+        OnMenuScreen, // 3. Enable bloom for the camera
     ));
 
     commands.spawn((
@@ -65,31 +70,44 @@ fn title_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
             mid_sel: false,
             bot_sel: false,
         },
+        OnMenuScreen,
     ));
 
-    commands.spawn(Text2dBundle {
-        text: Text::from_section("|- TERMINAL OVERLORD -|", text_style.clone()),
-        transform: Transform::from_xyz(5., 100., 0.),
-        ..default()
-    });
+    commands.spawn(
+        Text2dBundle {
+            text: Text::from_section("|- TERMINAL OVERLORD -|", text_style.clone()),
+            transform: Transform::from_xyz(5., 100., 0.),
+            ..default()
+        },
+        OnMenuScreen,
+    );
 
-    commands.spawn(Text2dBundle {
-        text: Text::from_section("New Game", text_style.clone()),
-        transform: Transform::from_xyz(-20., -150., 0.),
-        ..default()
-    });
+    commands.spawn(
+        Text2dBundle {
+            text: Text::from_section("New Game", text_style.clone()),
+            transform: Transform::from_xyz(-20., -150., 0.),
+            ..default()
+        },
+        OnMenuScreen,
+    );
 
-    commands.spawn(Text2dBundle {
-        text: Text::from_section("Load Save", text_style.clone()),
-        transform: Transform::from_xyz(-20., -250., 0.),
-        ..default()
-    });
+    commands.spawn(
+        Text2dBundle {
+            text: Text::from_section("Load Save", text_style.clone()),
+            transform: Transform::from_xyz(-20., -250., 0.),
+            ..default()
+        },
+        OnMenuScreen,
+    );
 
-    commands.spawn(Text2dBundle {
-        text: Text::from_section("Exit", text_style.clone()),
-        transform: Transform::from_xyz(-148., -350., 0.),
-        ..default()
-    });
+    commands.spawn(
+        Text2dBundle {
+            text: Text::from_section("Exit", text_style.clone()),
+            transform: Transform::from_xyz(-148., -350., 0.),
+            ..default()
+        },
+        OnMenuScreen,
+    );
 }
 
 fn selector(
