@@ -112,6 +112,7 @@ fn title_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 fn selector(
     keys: Res<Input<KeyCode>>,
+    mut game_state: ResMut<NextState<GameState>>,
     mut sprite_position: Query<(&mut Options, &mut Selection, &mut Transform)>,
 ) {
     for (mut opt, mut logo, mut transform) in &mut sprite_position {
@@ -163,6 +164,7 @@ fn selector(
 
         if opt.top_sel && keys.just_pressed(KeyCode::Return) {
             info!("the enter key was pressed for new game!");
+            game_state.set(GameState::Playing);
         }
 
         if opt.mid_sel && keys.just_pressed(KeyCode::Return) {
