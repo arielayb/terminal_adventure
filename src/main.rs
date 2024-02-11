@@ -5,7 +5,6 @@ use bevy::window::*;
 
 mod debug;
 mod main_menu;
-mod player;
 mod states;
 mod world;
 

@@ -1,5 +1,6 @@
 use crate::states::*;
 use bevy::prelude::*;
+use bevy_aseprite::{anim::AsepriteAnimation, AsepriteBundle, AsepritePlugin};
 
 // Tag component used to tag entities added on the game screen
 #[derive(Component)]
@@ -28,6 +29,7 @@ pub struct World;
 impl Plugin for World {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::Playing), world_setup)
+            .add_plugins(AsepritePlugin)
             .add_systems(Update, animate_sprite)
             .add_systems(OnExit(GameState::Playing), despawn_screen::<OnGameScreen>);
     }
@@ -55,21 +57,16 @@ fn animate_sprite(
     }
 }
 
-fn world_setup(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
-) {
-    let texture_handle = asset_server.load("workers/workers1.png");
-    let texture_atlas =
-        TextureAtlas::from_grid(texture_handle, Vec2::new(32.0, 32.0), 3, 1, None, None);
-    let texture_atlas_handle = texture_atlases.add(texture_atlas);
-    
+fn world_setup(mut commands: Commands,asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle::default());
     commands.spawn(AsepriteBundle {
         aseprite: asset_server.load("workers/workers1.aseprite"),
-        animation: AsepriteAnimation::from("walk"),
-        transform: Transform {...},
+        animation: AsepriteAnimation::from("player_left"),
+        transform: Transform {
+            scale: Vec3::splat(1.),
+            translation: Vec3::new(0., 80., 0.),
+            ..Default::default()
+        },
         ..Default::default()
     });
 }
