@@ -60,7 +60,7 @@ fn title_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn((
         SpriteBundle {
-            texture: asset_server.load("right.png"),
+            texture: asset_server.load("workers/right.png"),
             transform: Transform::from_xyz(-280., -150., 0.),
             ..default()
         },

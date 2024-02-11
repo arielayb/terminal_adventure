@@ -11,6 +11,14 @@ struct AnimationIndices {
     last: usize,
 }
 
+#[derive(Component)]
+enum PlayerMovement {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
 #[derive(Component, Deref, DerefMut)]
 struct AnimationTimer(Timer);
 
@@ -26,14 +34,16 @@ impl Plugin for World {
 }
 
 fn animate_sprite(
+    keys: Res<Input<KeyCode>>,
     time: Res<Time>,
     mut query: Query<(
         &AnimationIndices,
         &mut AnimationTimer,
         &mut TextureAtlasSprite,
+        &mut PlayerMovement,
     )>,
 ) {
-    for (indices, mut timer, mut sprite) in &mut query {
+    for (indices, mut timer, mut sprite, mut player_movement) in &mut query {
         timer.tick(time.delta());
         if timer.just_finished() {
             sprite.index = if sprite.index == indices.last {
@@ -50,21 +60,16 @@ fn world_setup(
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
-    let texture_handle = asset_server.load("workers1.png");
+    let texture_handle = asset_server.load("workers/workers1.png");
     let texture_atlas =
         TextureAtlas::from_grid(texture_handle, Vec2::new(32.0, 32.0), 3, 1, None, None);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
-    // Use only the subset of sprites in the sheet that make up the run animation
-    let animation_indices = AnimationIndices { first: 1, last: 2 };
+    
     commands.spawn(Camera2dBundle::default());
-    commands.spawn((
-        SpriteSheetBundle {
-            texture_atlas: texture_atlas_handle,
-            sprite: TextureAtlasSprite::new(animation_indices.first),
-            transform: Transform::from_scale(Vec3::splat(2.0)),
-            ..default()
-        },
-        animation_indices,
-        AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
-    ));
+    commands.spawn(AsepriteBundle {
+        aseprite: asset_server.load("workers/workers1.aseprite"),
+        animation: AsepriteAnimation::from("walk"),
+        transform: Transform {...},
+        ..Default::default()
+    });
 }
