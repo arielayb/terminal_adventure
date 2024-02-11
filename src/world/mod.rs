@@ -6,11 +6,8 @@ use bevy_aseprite::{anim::AsepriteAnimation, AsepriteBundle, AsepritePlugin};
 #[derive(Component)]
 struct OnGameScreen;
 
-#[derive(Component)]
-struct AnimationIndices {
-    first: usize,
-    last: usize,
-}
+#[derive(Component, Clone, Copy, Debug)]
+struct PlayerTag;
 
 #[derive(Component)]
 enum PlayerMovement {
@@ -23,6 +20,11 @@ enum PlayerMovement {
 #[derive(Component, Deref, DerefMut)]
 struct AnimationTimer(Timer);
 
+mod sprites {
+    use bevy_aseprite::aseprite;
+    aseprite!(pub Player, "workers/workers1.aseprite");
+}
+
 // This plugin will contain the game.
 pub struct World;
 
@@ -30,31 +32,45 @@ impl Plugin for World {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::Playing), world_setup)
             .add_plugins(AsepritePlugin)
-            .add_systems(Update, animate_sprite)
+            .add_systems(Update, player_movement)
             .add_systems(OnExit(GameState::Playing), despawn_screen::<OnGameScreen>);
     }
 }
 
-fn animate_sprite(
+fn player_movement(
     keys: Res<Input<KeyCode>>,
-    time: Res<Time>,
-    mut query: Query<(
-        &AnimationIndices,
-        &mut AnimationTimer,
-        &mut TextureAtlasSprite,
-        &mut PlayerMovement,
+    mut aseprites: ParamSet<(
+        Query<&mut AsepriteAnimation, With<PlayerTag>>,
     )>,
-) {
-    for (indices, mut timer, mut sprite, mut player_movement) in &mut query {
-        timer.tick(time.delta());
-        if timer.just_finished() {
-            sprite.index = if sprite.index == indices.last {
-                indices.first
-            } else {
-                sprite.index + 1
-            };
+){
+    if keys.just_pressed(KeyCode::W) {
+        for mut player_anim in aseprites.p0().iter_mut() {
+            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_UP);
         }
     }
+
+    if keys.just_pressed(KeyCode::A) {
+        for mut player_anim in aseprites.p0().iter_mut() {
+            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_LEFT);
+        }
+    } 
+
+    if keys.just_pressed(KeyCode::D) {
+        for mut player_anim in aseprites.p0().iter_mut() {
+            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_RIGHT);
+        }
+    }
+
+    if keys.just_pressed(KeyCode::S) {
+        for mut player_anim in aseprites.p0().iter_mut() {
+            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_DOWN);
+        }
+    } else {
+        for mut player_anim in aseprites.p0().iter_mut() {
+            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_DOWN_IDLE);
+        }
+    }
+
 }
 
 fn world_setup(mut commands: Commands,asset_server: Res<AssetServer>) {
@@ -68,5 +84,5 @@ fn world_setup(mut commands: Commands,asset_server: Res<AssetServer>) {
             ..Default::default()
         },
         ..Default::default()
-    });
+    }).insert(PlayerTag);
 }
