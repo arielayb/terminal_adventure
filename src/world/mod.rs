@@ -11,10 +11,10 @@ struct PlayerTag;
 
 #[derive(Component)]
 enum PlayerMovement {
-    Up,
-    Down,
-    Left,
-    Right,
+    Up_idle,
+    Down_idle,
+    Left_idle,
+    Right_idle,
 }
 
 #[derive(Component, Deref, DerefMut)]
@@ -37,48 +37,10 @@ impl Plugin for World {
     }
 }
 
-fn player_movement(
-    keys: Res<Input<KeyCode>>,
-    mut aseprites: ParamSet<(Query<&mut AsepriteAnimation, With<PlayerTag>>,)>,
-) {
-    for mut player_anim in aseprites.p0().iter_mut() {
-        if keys.pressed(KeyCode::W) {
-            //for mut player_anim in aseprites.p0().iter_mut() {
-            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_UP);
-            //}
-        }
-
-        if keys.pressed(KeyCode::A) {
-            //for mut player_anim in aseprites.p0().iter_mut() {
-            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_LEFT);
-            //}
-        }
-
-        if keys.pressed(KeyCode::D) {
-            //for mut player_anim in aseprites.p0().iter_mut() {
-            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_RIGHT);
-            //}
-        }
-
-        if keys.just_pressed(KeyCode::S) && player_anim.is_paused() {
-            //for mut player_anim in aseprites.p0().iter_mut() {
-            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_DOWN);
-        } else if keys.pressed(KeyCode::S) {
-            //for mut player_anim in aseprites.p0().iter_mut() {
-            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_DOWN_IDLE);
-            player_anim.toggle();
-
-            //}
-            //}
-            //}
-        }
-    }
-}
-
 fn world_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle::default());
     commands
-        .spawn(AsepriteBundle {
+        .spawn((AsepriteBundle {
             aseprite: asset_server.load("workers/workers1.aseprite"),
             animation: AsepriteAnimation::from("player_left"),
             transform: Transform {
@@ -87,6 +49,35 @@ fn world_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..Default::default()
             },
             ..Default::default()
-        })
+        },PlayerMovement::Down_idle,))
         .insert(PlayerTag);
+}
+
+fn player_movement(
+    keys: Res<Input<KeyCode>>,
+    mut aseprites: ParamSet<(Query<&mut AsepriteAnimation, With<PlayerTag>>,)>,
+) {
+    for mut player_anim in aseprites.p0().iter_mut() {
+        if keys.pressed(KeyCode::W) {
+            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_UP);
+        }
+
+        if keys.pressed(KeyCode::A) {
+            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_LEFT);
+        }
+
+        if keys.pressed(KeyCode::D) {
+            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_RIGHT);
+        }else if keys.just_released(KeyCode::D) {
+            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_RIGHT_IDLE);
+        }
+
+        if keys.just_pressed(KeyCode::S) {
+            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_DOWN);
+        
+           
+        }else if keys.just_released(KeyCode::S) {
+                *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_DOWN_IDLE);
+        }
+    }
 }
