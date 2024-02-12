@@ -42,7 +42,7 @@ fn world_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn((AsepriteBundle {
             aseprite: asset_server.load("workers/workers1.aseprite"),
-            animation: AsepriteAnimation::from("player_left"),
+            animation: AsepriteAnimation::from("player_down_idle"),
             transform: Transform {
                 scale: Vec3::splat(1.),
                 translation: Vec3::new(0., 80., 0.),
@@ -58,15 +58,19 @@ fn player_movement(
     mut aseprites: ParamSet<(Query<&mut AsepriteAnimation, With<PlayerTag>>,)>,
 ) {
     for mut player_anim in aseprites.p0().iter_mut() {
-        if keys.pressed(KeyCode::W) {
+        if keys.just_pressed(KeyCode::W) {
             *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_UP);
+        }else if keys.just_released(KeyCode::W) {
+            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_UP_IDLE);
         }
 
-        if keys.pressed(KeyCode::A) {
+        if keys.just_pressed(KeyCode::A) {
             *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_LEFT);
+        }else if keys.just_released(KeyCode::A) {
+            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_LEFT_IDLE);
         }
 
-        if keys.pressed(KeyCode::D) {
+        if keys.just_pressed(KeyCode::D) {
             *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_RIGHT);
         }else if keys.just_released(KeyCode::D) {
             *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_RIGHT_IDLE);
@@ -74,10 +78,8 @@ fn player_movement(
 
         if keys.just_pressed(KeyCode::S) {
             *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_DOWN);
-        
-           
         }else if keys.just_released(KeyCode::S) {
-                *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_DOWN_IDLE);
+            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_DOWN_IDLE);
         }
     }
 }
