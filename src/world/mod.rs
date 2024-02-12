@@ -11,10 +11,10 @@ struct PlayerTag;
 
 #[derive(Component)]
 enum PlayerMovement {
-    Up_idle,
-    Down_idle,
-    Left_idle,
-    Right_idle,
+    Up,
+    Down,
+    Left,
+    Right,
 }
 
 #[derive(Component, Deref, DerefMut)]
@@ -49,17 +49,26 @@ fn world_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..Default::default()
             },
             ..Default::default()
-        },PlayerMovement::Down_idle,))
+        },PlayerMovement::Down,))
         .insert(PlayerTag);
 }
 
 fn player_movement(
+    time: Res<Time>,
     keys: Res<Input<KeyCode>>,
-    mut aseprites: ParamSet<(Query<&mut AsepriteAnimation, With<PlayerTag>>,)>,
+    mut aseprites: ParamSet<(Query<(&mut AsepriteAnimation, &mut PlayerMovement, &mut Transform), With<PlayerTag>>,)>,
 ) {
-    for mut player_anim in aseprites.p0().iter_mut() {
+    for (mut player_anim, mut movement, mut pos ) in aseprites.p0().iter_mut() {
+        match *movement{
+            PlayerMovement::Up => pos.translation.y += 1. * time.delta_seconds(),
+            PlayerMovement::Down => pos.translation.y -= 1. * time.delta_seconds(),
+            PlayerMovement::Left => pos.translation.x -= 1. * time.delta_seconds(),
+            PlayerMovement::Right => pos.translation.x += 1. * time.delta_seconds(),
+        }
+        
         if keys.just_pressed(KeyCode::W) {
             *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_UP);
+            *movement = PlayerMovement::Up;
         }else if keys.just_released(KeyCode::W) {
             *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_UP_IDLE);
         }
