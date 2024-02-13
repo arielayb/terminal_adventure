@@ -9,14 +9,6 @@ struct OnGameScreen;
 #[derive(Component, Clone, Copy, Debug)]
 struct PlayerTag;
 
-#[derive(Component)]
-enum PlayerMovement {
-    Up,
-    Down,
-    Left,
-    Right,
-}
-
 #[derive(Component, Deref, DerefMut)]
 struct AnimationTimer(Timer);
 
@@ -40,7 +32,7 @@ impl Plugin for World {
 fn world_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle::default());
     commands
-        .spawn((AsepriteBundle {
+        .spawn(AsepriteBundle {
             aseprite: asset_server.load("workers/workers1.aseprite"),
             animation: AsepriteAnimation::from("player_down_idle"),
             transform: Transform {
@@ -49,46 +41,76 @@ fn world_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..Default::default()
             },
             ..Default::default()
-        },PlayerMovement::Down,))
+        })
         .insert(PlayerTag);
 }
 
 fn player_movement(
     time: Res<Time>,
     keys: Res<Input<KeyCode>>,
-    mut aseprites: ParamSet<(Query<(&mut AsepriteAnimation, &mut PlayerMovement, &mut Transform), With<PlayerTag>>,)>,
+    mut aseprites: ParamSet<(Query<(&mut AsepriteAnimation, &mut Transform), With<PlayerTag>>,)>,
 ) {
-    for (mut player_anim, mut movement, mut pos ) in aseprites.p0().iter_mut() {
-        match *movement{
-            PlayerMovement::Up => pos.translation.y += 1. * time.delta_seconds(),
-            PlayerMovement::Down => pos.translation.y -= 1. * time.delta_seconds(),
-            PlayerMovement::Left => pos.translation.x -= 1. * time.delta_seconds(),
-            PlayerMovement::Right => pos.translation.x += 1. * time.delta_seconds(),
-        }
+    let mut direction = Vec2::ZERO;
+    for (mut player_anim, mut pos ) in &mut aseprites.p0().iter_mut() {
+    
         
-        if keys.just_pressed(KeyCode::W) {
-            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_UP);
-            *movement = PlayerMovement::Up;
-        }else if keys.just_released(KeyCode::W) {
-            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_UP_IDLE);
+        if keys.pressed(KeyCode::W) {
+            // for (mut player_anim, mut pos ) in &mut aseprites.p0().iter_mut() {
+
+                *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_UP);
+                // *movement = PlayerMovement::Up;
+                // direction.y += 1.;
+
+            // }
+            direction.y += 1.;
+
+        // }else if keys.just_released(KeyCode::W) {
+        //     // for (mut player_anim, mut pos ) in &mut aseprites.p0().iter_mut() {
+        //         *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_UP_IDLE);
+        //     // }
         }
 
         if keys.just_pressed(KeyCode::A) {
-            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_LEFT);
+            // for (mut player_anim, mut pos ) in &mut aseprites.p0().iter_mut() {
+                *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_LEFT);
+                //*movement = PlayerMovement::Left;
+            // }
+            direction.x -= 1.;
         }else if keys.just_released(KeyCode::A) {
-            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_LEFT_IDLE);
+            // for (mut player_anim, mut pos ) in &mut aseprites.p0().iter_mut() {
+                *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_LEFT_IDLE);
+            // }
         }
 
         if keys.just_pressed(KeyCode::D) {
-            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_RIGHT);
+            // for (mut player_anim, mut pos ) in &mut aseprites.p0().iter_mut() {
+                *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_RIGHT);
+                //*movement = PlayerMovement::Right;
+            // }
+            direction.x += 1.;
         }else if keys.just_released(KeyCode::D) {
-            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_RIGHT_IDLE);
+            // for (mut player_anim, mut pos ) in &mut aseprites.p0().iter_mut() {
+                *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_RIGHT_IDLE);
+            // }
         }
 
         if keys.just_pressed(KeyCode::S) {
-            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_DOWN);
+            // for (mut player_anim, mut pos ) in &mut aseprites.p0().iter_mut() {
+                *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_DOWN);
+                //*movement = PlayerMovement::Down;
+            // }
+            direction.y -= 1.;
         }else if keys.just_released(KeyCode::S) {
-            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_DOWN_IDLE);
+            // for (mut player_anim, mut pos ) in &mut aseprites.p0().iter_mut() {
+                *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_DOWN_IDLE);
+            // }
         }
+
+        let move_speed = 45.;
+        let move_delta = direction * move_speed * time.delta_seconds();
+
+        // for (mut player_anim, mut pos ) in &mut aseprites.p0().iter_mut() {
+            pos.translation += move_delta.extend(0.);
+        // }
     }
 }
