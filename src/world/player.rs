@@ -51,70 +51,69 @@ fn player_movement(
     mut key_evr: EventReader<KeyboardInput>,
     mut aseprites: ParamSet<(Query<(&mut AsepriteAnimation, &mut Transform), With<PlayerTag>>,)>,
 ) {
+    // 2D vector for player's direction
     let mut direction = Vec2::ZERO;
-    for (mut player_anim, mut pos) in aseprites.p0().iter_mut() {
-        // TODO: add other key/controls for player
-        for ev in key_evr.iter() {
-            match ev.state {
-                ButtonState::Pressed => {
-                    println!("Key press: {:?} ({})", ev.key_code , ev.scan_code);
-                    // let key = ev.key_code.expect("W");
-
-                    // if key == KeyCode::W {
-                    //     println!("W was pressed!");
-                    //     *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_UP);
-                    // }
-                }
-                ButtonState::Released => {
-                    println!("Key release: {:?} ({})", ev.key_code, ev.scan_code);
-                    // let key = ev.key_code.expect("W");
-
-                    // if key == KeyCode::W {
-                    //     println!("W was released!");
-                    //     *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_UP_IDLE);
-                    // }
-                }
-            }
-        }
-
-        if keys.any_pressed([KeyCode::W, KeyCode::Up]) {
-            if keys.any_just_pressed([KeyCode::W, KeyCode::Up]) {
-                *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_UP);
-            }
-            direction.y += 1.;
-        } 
-        else if keys.any_just_pressed([KeyCode::W, KeyCode::Up]) {
+    
+    // key codes for each direction
+    const KEYS_UP: [KeyCode; 2] = [KeyCode::Up, KeyCode::W];
+    const KEYS_DOWN: [KeyCode; 2] = [KeyCode::Down, KeyCode::S];
+    const KEYS_LEFT: [KeyCode; 2] = [KeyCode::Left, KeyCode::A];
+    const KEYS_RIGHT: [KeyCode; 2] = [KeyCode::Right, KeyCode::D];
+    
+    for (mut player_anim, mut pos) in &mut aseprites.p0().iter_mut() { 
+        if keys.any_just_released(KEYS_UP) && !keys.any_pressed(KEYS_UP) 
+            && !keys.any_pressed(KEYS_LEFT) && !keys.any_pressed(KEYS_RIGHT) {
             *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_UP_IDLE);
-        }
-        
-        if keys.any_pressed([KeyCode::A, KeyCode::Left]) {
-            if keys.any_just_pressed([KeyCode::A, KeyCode::Left]) {
+        } else if keys.any_just_released(KEYS_LEFT) && !keys.any_pressed(KEYS_UP) && !keys.any_pressed(KEYS_DOWN){
+            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_LEFT_IDLE);
+        } else if keys.any_just_released(KEYS_RIGHT) && !keys.any_pressed(KEYS_UP) && !keys.any_pressed(KEYS_DOWN){
+            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_RIGHT_IDLE);
+        } if keys.any_just_released(KEYS_DOWN) && !keys.any_pressed(KEYS_DOWN) 
+            && !keys.any_pressed(KEYS_LEFT) && !keys.any_pressed(KEYS_RIGHT) {
+            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_DOWN_IDLE);
+        } 
+
+        if keys.any_pressed(KEYS_LEFT) {
+            if keys.any_just_pressed(KEYS_LEFT) {
                 *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_LEFT);
             }
             direction.x -= 1.;
-        } 
-        else if keys.any_just_pressed([KeyCode::A, KeyCode::Left])  {
-            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_LEFT_IDLE);
         }
 
-        if keys.any_pressed([KeyCode::D, KeyCode::Right]) {
-            if keys.any_just_pressed([KeyCode::D, KeyCode::Right]) {
+        if keys.any_pressed(KEYS_RIGHT) {
+            if keys.any_just_pressed(KEYS_RIGHT) {
                 *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_RIGHT);
             }
             direction.x += 1.;
         } 
-        else if keys.any_just_released([KeyCode::D, KeyCode::Right]) {
-            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_RIGHT_IDLE);
-        }
 
-        if keys.any_pressed([KeyCode::S, KeyCode::Down]) {
-            if keys.any_just_pressed([KeyCode::S, KeyCode::Down]) {
+        if keys.any_pressed(KEYS_UP) {
+            if keys.any_just_pressed(KEYS_UP) {
+                *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_UP);
+            }
+            if keys.any_pressed(KEYS_LEFT) {
+                if keys.any_just_pressed(KEYS_LEFT) {
+                    *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_LEFT);
+                } else if keys.any_just_pressed(KEYS_RIGHT) {
+                    *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_RIGHT);
+                }
+            }
+    
+            direction.y += 1.;
+        }
+        
+        if keys.any_pressed(KEYS_DOWN) {
+            if keys.any_just_pressed(KEYS_DOWN) {
                 *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_DOWN);
             }
+            if keys.any_pressed(KEYS_LEFT) {
+                if keys.any_just_pressed(KEYS_LEFT) {
+                    *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_LEFT);
+                } else if keys.any_just_pressed(KEYS_RIGHT) {
+                    *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_RIGHT);
+                }
+            }
             direction.y -= 1.;
-        } 
-        else if keys.any_just_released([KeyCode::S, KeyCode::Down]) {
-            *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_DOWN_IDLE);
         }
 
         if direction == Vec2::ZERO {
