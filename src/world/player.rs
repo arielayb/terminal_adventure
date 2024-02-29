@@ -60,58 +60,78 @@ fn player_movement(
     const KEYS_LEFT: [KeyCode; 2] = [KeyCode::Left, KeyCode::A];
     const KEYS_RIGHT: [KeyCode; 2] = [KeyCode::Right, KeyCode::D];
     
-    for (mut player_anim, mut pos) in &mut aseprites.p0().iter_mut() { 
+    for (mut player_anim, mut pos) in aseprites.p0().iter_mut() { 
         if keys.any_just_released(KEYS_UP) && !keys.any_pressed(KEYS_UP) 
             && !keys.any_pressed(KEYS_LEFT) && !keys.any_pressed(KEYS_RIGHT) {
             *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_UP_IDLE);
-        } else if keys.any_just_released(KEYS_LEFT) && !keys.any_pressed(KEYS_UP) && !keys.any_pressed(KEYS_DOWN){
+        } else if keys.any_just_released(KEYS_LEFT) && !keys.any_pressed(KEYS_UP) 
+            && !keys.any_pressed(KEYS_DOWN) && !keys.any_pressed(KEYS_RIGHT) {
             *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_LEFT_IDLE);
-        } else if keys.any_just_released(KEYS_RIGHT) && !keys.any_pressed(KEYS_UP) && !keys.any_pressed(KEYS_DOWN){
+        } else if keys.any_just_released(KEYS_RIGHT) && !keys.any_pressed(KEYS_UP) 
+            && !keys.any_pressed(KEYS_DOWN) && !keys.any_pressed(KEYS_LEFT){
             *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_RIGHT_IDLE);
         } if keys.any_just_released(KEYS_DOWN) && !keys.any_pressed(KEYS_DOWN) 
             && !keys.any_pressed(KEYS_LEFT) && !keys.any_pressed(KEYS_RIGHT) {
             *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_DOWN_IDLE);
         } 
 
-        if keys.any_pressed(KEYS_LEFT) {
+        if keys.any_pressed(KEYS_LEFT) && !keys.any_pressed(KEYS_RIGHT) && !keys.any_just_pressed(KEYS_RIGHT){
             if keys.any_just_pressed(KEYS_LEFT) {
                 *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_LEFT);
             }
+            if keys.any_pressed(KEYS_UP) {
+                if keys.any_just_pressed(KEYS_UP) {
+                    *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_UP);
+                }
+            }else if keys.any_pressed(KEYS_DOWN) {
+                if keys.any_just_pressed(KEYS_DOWN) {
+                    *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_DOWN);
+                }
+            }
             direction.x -= 1.;
         }
-
-        if keys.any_pressed(KEYS_RIGHT) {
+        if keys.any_pressed(KEYS_RIGHT) && !keys.any_pressed(KEYS_LEFT) && !keys.any_just_pressed(KEYS_LEFT){
             if keys.any_just_pressed(KEYS_RIGHT) {
                 *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_RIGHT);
+            }
+            if keys.any_pressed(KEYS_UP) {
+                if keys.any_just_pressed(KEYS_UP) {
+                    *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_UP);
+                }
+            }else if keys.any_pressed(KEYS_DOWN) {
+                if keys.any_just_pressed(KEYS_DOWN) {
+                    *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_DOWN);
+                }
             }
             direction.x += 1.;
         } 
 
-        if keys.any_pressed(KEYS_UP) {
+        if keys.any_pressed(KEYS_UP) && !keys.any_pressed(KEYS_DOWN) 
+            && !keys.any_just_pressed(KEYS_LEFT) && !keys.any_just_pressed(KEYS_RIGHT) {
             if keys.any_just_pressed(KEYS_UP) {
                 *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_UP);
-            }
-            if keys.any_pressed(KEYS_LEFT) {
+            }else if keys.any_pressed(KEYS_LEFT) {
                 if keys.any_just_pressed(KEYS_LEFT) {
                     *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_LEFT);
-                } else if keys.any_just_pressed(KEYS_RIGHT) {
-                    *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_RIGHT);
                 }
+            }else if keys.any_pressed(KEYS_RIGHT) {
+                if keys.any_just_pressed(KEYS_RIGHT) {
+                    *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_RIGHT);
+                } 
             }
-    
             direction.y += 1.;
-        }
-        
-        if keys.any_pressed(KEYS_DOWN) {
+        }else if keys.any_pressed(KEYS_DOWN) && !keys.any_pressed(KEYS_UP) {
             if keys.any_just_pressed(KEYS_DOWN) {
                 *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_DOWN);
             }
             if keys.any_pressed(KEYS_LEFT) {
                 if keys.any_just_pressed(KEYS_LEFT) {
                     *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_LEFT);
-                } else if keys.any_just_pressed(KEYS_RIGHT) {
-                    *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_RIGHT);
                 }
+            }else if keys.any_pressed(KEYS_RIGHT) {
+                if keys.any_just_pressed(KEYS_RIGHT) {
+                    *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_RIGHT);
+                } 
             }
             direction.y -= 1.;
         }
