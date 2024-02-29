@@ -75,26 +75,25 @@ fn player_movement(
             *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_DOWN_IDLE);
         } 
 
-        if keys.any_pressed(KEYS_LEFT) && !keys.any_pressed(KEYS_RIGHT) && !keys.any_just_pressed(KEYS_RIGHT){
-            if keys.any_just_pressed(KEYS_LEFT) {
+        if keys.any_pressed(KEYS_LEFT) && !keys.any_pressed(KEYS_RIGHT) 
+            && !keys.any_just_pressed(KEYS_RIGHT){
+            if keys.any_just_pressed(KEYS_LEFT) {    
                 *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_LEFT);
-            }
-            if keys.any_pressed(KEYS_UP) {
+            }else if keys.any_pressed(KEYS_UP) {
                 if keys.any_just_pressed(KEYS_UP) {
                     *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_UP);
                 }
             }else if keys.any_pressed(KEYS_DOWN) {
-                if keys.any_just_pressed(KEYS_DOWN) {
+                if keys.any_just_pressed(KEYS_DOWN) && keys.any_just_pressed(KEYS_LEFT) {
                     *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_DOWN);
                 }
             }
             direction.x -= 1.;
-        }
-        if keys.any_pressed(KEYS_RIGHT) && !keys.any_pressed(KEYS_LEFT) && !keys.any_just_pressed(KEYS_LEFT){
+        }else if keys.any_pressed(KEYS_RIGHT) && !keys.any_pressed(KEYS_LEFT) 
+                && !keys.any_just_pressed(KEYS_LEFT){
             if keys.any_just_pressed(KEYS_RIGHT) {
                 *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_RIGHT);
-            }
-            if keys.any_pressed(KEYS_UP) {
+            }else if keys.any_pressed(KEYS_UP) {
                 if keys.any_just_pressed(KEYS_UP) {
                     *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_UP);
                 }
@@ -120,11 +119,11 @@ fn player_movement(
                 } 
             }
             direction.y += 1.;
-        }else if keys.any_pressed(KEYS_DOWN) && !keys.any_pressed(KEYS_UP) {
+        }else if keys.any_pressed(KEYS_DOWN) && !keys.any_pressed(KEYS_UP) 
+                && !keys.any_just_pressed(KEYS_LEFT) && !keys.any_just_pressed(KEYS_RIGHT) {
             if keys.any_just_pressed(KEYS_DOWN) {
                 *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_DOWN);
-            }
-            if keys.any_pressed(KEYS_LEFT) {
+            }else if keys.any_pressed(KEYS_LEFT) {
                 if keys.any_just_pressed(KEYS_LEFT) {
                     *player_anim = AsepriteAnimation::from(sprites::Player::tags::PLAYER_LEFT);
                 }
