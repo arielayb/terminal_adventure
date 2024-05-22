@@ -49,6 +49,7 @@ fn player_movement(
     time: Res<Time>,
     mut keys: Res<Input<KeyCode>>,
     mut key_evr: EventReader<KeyboardInput>,
+    mut players: Query<&mut GridCoords, With<Player>>,
     mut aseprites: ParamSet<(Query<(&mut AsepriteAnimation, &mut Transform), With<PlayerTag>>,)>,
 ) {
     // 2D vector for player's direction

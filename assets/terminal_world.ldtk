@@ -11,7 +11,7 @@
 	"iid": "a0dafc00-fec0-11ee-86a0-9b3fbf3a6199",
 	"jsonVersion": "1.5.3",
 	"appBuildId": 473703,
-	"nextUid": 27,
+	"nextUid": 33,
 	"identifierStyle": "Capitalize",
 	"toc": [],
 	"worldLayout": "LinearHorizontal",
@@ -41,6 +41,41 @@
 	"customCommands": [],
 	"flags": [],
 	"defs": { "layers": [
+		{
+			"__type": "Entities",
+			"identifier": "Entities",
+			"type": "Entities",
+			"uid": 31,
+			"doc": null,
+			"uiColor": null,
+			"gridSize": 16,
+			"guideGridWid": 0,
+			"guideGridHei": 0,
+			"displayOpacity": 1,
+			"inactiveOpacity": 0.6,
+			"hideInList": false,
+			"hideFieldsWhenInactive": true,
+			"canSelectWhenInactive": true,
+			"renderInWorldView": true,
+			"pxOffsetX": 0,
+			"pxOffsetY": 0,
+			"parallaxFactorX": 0,
+			"parallaxFactorY": 0,
+			"parallaxScaling": true,
+			"requiredTags": [],
+			"excludedTags": [],
+			"autoTilesKilledByOtherLayerUid": null,
+			"uiFilterTags": [],
+			"useAsyncRender": false,
+			"intGridValues": [],
+			"intGridValuesGroups": [],
+			"autoRuleGroups": [],
+			"autoSourceLayerDefUid": null,
+			"tilesetDefUid": null,
+			"tilePivotX": 0,
+			"tilePivotY": 0,
+			"biomeFieldUid": null
+		},
 		{
 			"__type": "IntGrid",
 			"identifier": "Wall2",
@@ -248,16 +283,52 @@
 			"tilePivotY": 0,
 			"biomeFieldUid": null
 		}
-	], "entities": [], "tilesets": [
+	], "entities": [
+		{
+			"identifier": "Player",
+			"uid": 32,
+			"tags": [],
+			"exportToToc": false,
+			"allowOutOfBounds": false,
+			"doc": null,
+			"width": 16,
+			"height": 16,
+			"resizableX": false,
+			"resizableY": false,
+			"minWidth": null,
+			"maxWidth": null,
+			"minHeight": null,
+			"maxHeight": null,
+			"keepAspectRatio": false,
+			"tileOpacity": 1,
+			"fillOpacity": 0.08,
+			"lineOpacity": 0,
+			"hollow": false,
+			"color": "#BE4A2F",
+			"renderMode": "Tile",
+			"showName": true,
+			"tilesetId": 1,
+			"tileRenderMode": "FitInside",
+			"tileRect": { "tilesetUid": 1, "x": 0, "y": 0, "w": 32, "h": 32 },
+			"uiTileRect": null,
+			"nineSliceBorders": [],
+			"maxCount": 0,
+			"limitScope": "PerLevel",
+			"limitBehavior": "MoveLastOne",
+			"pivotX": 0,
+			"pivotY": 0,
+			"fieldDefs": []
+		}
+	], "tilesets": [
 		{
 			"__cWid": 12,
-			"__cHei": 8,
-			"identifier": "Workers1",
+			"__cHei": 1,
+			"identifier": "Player",
 			"uid": 1,
-			"relPath": "workers/workers1.png",
+			"relPath": "workers/player.png",
 			"embedAtlas": null,
 			"pxWid": 384,
-			"pxHei": 256,
+			"pxHei": 32,
 			"tileGridSize": 32,
 			"spacing": 0,
 			"padding": 0,
@@ -266,7 +337,7 @@
 			"enumTags": [],
 			"customData": [],
 			"savedSelections": [],
-			"cachedPixelData": null
+			"cachedPixelData": { "opaqueTiles": "111111111111", "averageColors": "f666f777f777f666f777f777f666f777f777f777f777f777" }
 		},
 		{
 			"__cWid": 8,
@@ -285,7 +356,10 @@
 			"enumTags": [],
 			"customData": [],
 			"savedSelections": [],
-			"cachedPixelData": null
+			"cachedPixelData": {
+				"opaqueTiles": "11111111111111111111111111111111",
+				"averageColors": "faaafaaafaaafaaafaaafaaaf777f666f777f777f777f777f777f777f777f777f888f888f888f888f888f888f888f888f777f777f777f777fdddfaaafcccf000"
+			}
 		},
 		{
 			"__cWid": 8,
@@ -304,7 +378,10 @@
 			"enumTags": [],
 			"customData": [],
 			"savedSelections": [],
-			"cachedPixelData": null
+			"cachedPixelData": {
+				"opaqueTiles": "111111111111111111111111",
+				"averageColors": "f999f999faaafaaafaaafaaafeeefffff777f777f777f777f777f777f777f777f999f999fdddf333f666f777f888f000"
+			}
 		}
 	], "enums": [], "externalEnums": [], "levelFields": [] },
 	"levels": [
@@ -329,6 +406,46 @@
 			"externalRelPath": null,
 			"fieldInstances": [],
 			"layerInstances": [
+				{
+					"__identifier": "Entities",
+					"__type": "Entities",
+					"__cWid": 16,
+					"__cHei": 16,
+					"__gridSize": 16,
+					"__opacity": 1,
+					"__pxTotalOffsetX": 0,
+					"__pxTotalOffsetY": 0,
+					"__tilesetDefUid": null,
+					"__tilesetRelPath": null,
+					"iid": "1d35e310-fec0-11ee-af72-8b8564d9d06f",
+					"levelId": 0,
+					"layerDefUid": 31,
+					"pxOffsetX": 0,
+					"pxOffsetY": 0,
+					"visible": true,
+					"optionalRules": [],
+					"intGridCsv": [],
+					"autoLayerTiles": [],
+					"seed": 6475167,
+					"overrideTilesetUid": null,
+					"gridTiles": [],
+					"entityInstances": [
+						{
+							"__identifier": "Player",
+							"__grid": [6,6],
+							"__pivot": [0,0],
+							"__tags": [],
+							"__tile": { "tilesetUid": 1, "x": 0, "y": 0, "w": 32, "h": 32 },
+							"__smartColor": "#BE4A2F",
+							"iid": "97a34980-fec0-11ee-af72-315404748248",
+							"width": 16,
+							"height": 16,
+							"defUid": 32,
+							"px": [96,96],
+							"fieldInstances": []
+						}
+					]
+				},
 				{
 					"__identifier": "Wall2",
 					"__type": "IntGrid",
