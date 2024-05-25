@@ -337,7 +337,7 @@
 			"enumTags": [],
 			"customData": [],
 			"savedSelections": [],
-			"cachedPixelData": { "opaqueTiles": "111111111111", "averageColors": "f666f777f777f666f777f777f666f777f777f777f777f777" }
+			"cachedPixelData": { "opaqueTiles": "000000000000", "averageColors": "3fff3fff3fff3fff3fff3fff3fff3fff3fff3fff3fff3fff" }
 		},
 		{
 			"__cWid": 8,
@@ -432,7 +432,7 @@
 					"entityInstances": [
 						{
 							"__identifier": "Player",
-							"__grid": [6,6],
+							"__grid": [3,6],
 							"__pivot": [0,0],
 							"__tags": [],
 							"__tile": { "tilesetUid": 1, "x": 0, "y": 0, "w": 32, "h": 32 },
@@ -441,7 +441,7 @@
 							"width": 16,
 							"height": 16,
 							"defUid": 32,
-							"px": [96,96],
+							"px": [48,96],
 							"fieldInstances": []
 						}
 					]

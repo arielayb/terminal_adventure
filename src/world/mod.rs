@@ -1,19 +1,18 @@
 use crate::states::*;
 use bevy::prelude::*;
-use bevy_ecs_ldtk::prelude::*;
 use bevy_aseprite::{anim::AsepriteAnimation, AsepriteBundle, AsepritePlugin};
-
+use bevy_ecs_ldtk::prelude::*;
 mod player;
 mod abstract_world_builder;
 mod farm;
 
-#[derive(Default, Bundle, LdtkEntity)]
-struct PlayerBundle {
-    #[sprite_sheet_bundle]
-    sprite_sheet_bundle: SpriteSheetBundle,
-    #[grid_coords]
-    grid_coords: GridCoords,
-}
+// #[derive(Default, Bundle, LdtkEntity)]
+// struct PlayerBundle {
+//     #[sprite_sheet_bundle]
+//     sprite_sheet_bundle: SpriteSheetBundle,
+//     #[grid_coords]
+//     grid_coords: GridCoords,
+// }
 
 // Tag component used to tag entities added on the game screen
 #[derive(Component)]
@@ -27,7 +26,7 @@ impl Plugin for World {
         app.add_systems(OnEnter(GameState::Playing), world_setup)
             .add_plugins(player::Player)
             .add_plugins(LdtkPlugin)
-            .register_ldtk_entity::<PlayerBundle>("Player")
+            // .register_ldtk_entity::<PlayerBundle>("Player")
             .insert_resource(LevelSelection::index(0))
             .add_systems(OnExit(GameState::Playing), despawn_screen::<OnGameScreen>);
     }
