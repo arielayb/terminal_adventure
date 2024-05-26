@@ -45,16 +45,4 @@ fn world_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ldtk_handle: asset_server.load("terminal_world.ldtk"),
         ..Default::default()
     });
-    // commands
-    //     .spawn(AsepriteBundle {
-    //         aseprite: asset_server.load("workers/workers1.aseprite"),
-    //         animation: AsepriteAnimation::from("player_down_idle"),
-    //         transform: Transform {
-    //             scale: Vec3::splat(1.),
-    //             translation: Vec3::new(0., 80., 0.),
-    //             ..Default::default()
-    //         },
-    //         ..Default::default()
-    //     })
-    //     .insert(PlayerTag);
 }
