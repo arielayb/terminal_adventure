@@ -1,5 +1,3 @@
-// use std::collections::binary_heap::Iter;
-
 use crate::states::*;
 use std::collections::HashSet;
 use bevy::{prelude::*, utils::hashbrown::Equivalent};
@@ -14,63 +12,35 @@ struct OnGameScreen;
 
 mod sprites {
     use bevy_aseprite::aseprite;
-    aseprite!(pub Player, "workers/workers1.aseprite");
+    aseprite!(pub Npc, "workers/workers1.aseprite");
 }
 
+#[derive(Component, Clone, Copy, Debug)]
+struct NpcTag;
+
 #[derive(Default, Bundle, LdtkEntity)]
-struct PlayerBundle {
-    player: Player,
+struct NpcBundle {
+    npc: Npc,
     #[sprite_sheet_bundle]
     sprite_sheet_bundle: SpriteSheetBundle,
     #[grid_coords]
     grid_coords: GridCoords,
 }
 
-#[derive(Component, Clone, Copy, Debug)]
-struct PlayerTag;
-
-// // This plugin will contain the game.
+// This plugin will contain the NPC or events.
 #[derive(Default, Component)]
-pub struct Player;
+pub struct Npc;
 
-impl Plugin for Player {
+impl Plugin for Npc {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::Playing), spawn_player)
-            .add_plugins(AsepritePlugin)
-            .register_ldtk_entity::<PlayerBundle>("Player")
-            .register_ldtk_int_cell::<WallBundle>(1)
-            .init_resource::<LevelWalls>()
-            .add_systems(Update, (move_player_from_input, translate_grid_coords_entities, cache_wall_locations))
+        app.add_systems(OnEnter(GameState::Playing), spawn_npc)
+            .register_ldtk_entity::<NpcBundle>("NPC")
+            .add_systems(Update, (move_npc, translate_grid_coords_entities))
             .add_systems(OnExit(GameState::Playing), despawn_screen::<OnGameScreen>);
     }
 }
 
-#[derive(Default, Resource)]
-struct LevelWalls {
-    wall_locations: HashSet<GridCoords>,
-    level_width: i32,
-    level_height: i32,
-}
-
-impl LevelWalls {
-    fn in_wall(&self, grid_coords: &GridCoords) -> bool {
-        grid_coords.x < 0
-            || grid_coords.y < 0
-            || grid_coords.x >= self.level_width
-            || grid_coords.y >= self.level_height
-            || self.wall_locations.contains(grid_coords)
-    }
-}
-
-#[derive(Default, Component)]
-struct Wall;
-
-#[derive(Default, Bundle, LdtkIntCell)]
-struct WallBundle {
-    wall: Wall,
-}
-
-fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>,) {
+fn spawn_npc(mut commands: Commands, asset_server: Res<AssetServer>,) {
     // commands
     //     .spawn(AsepriteBundle {
     //         aseprite: asset_server.load("workers/workers1.aseprite"),
@@ -85,8 +55,8 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>,) {
     //     .insert(PlayerTag);
 
     commands.spawn(
-        PlayerBundle{
-            player: Player,
+        NpcBundle{
+            npc: Npc,
             // sprite_sheet_bundle: SpriteSheetBundle { 
             //     transform: Transform {
             //         scale: Vec3::splat(1.),
@@ -97,12 +67,11 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>,) {
             // },
             ..Default::default()
         }
-    ).insert(Player);
+    ).insert(Npc);
 }
 
-fn move_player_from_input(
-    mut players: Query<&mut GridCoords, With<Player>>,
-    mut input: Res<Input<KeyCode>>,
+fn move_npc(
+    mut npc: Query<&mut GridCoords, With<Npc>>,
     level_walls: Res<LevelWalls>,
 ) {
     let movement_direction = if input.just_pressed(KeyCode::W) {
