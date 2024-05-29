@@ -2,6 +2,7 @@ use crate::states::*;
 use bevy::prelude::*;
 use bevy_aseprite::{anim::AsepriteAnimation, AsepriteBundle, AsepritePlugin};
 use bevy_ecs_ldtk::prelude::*;
+
 mod player;
 mod non_playable_char;
 mod abstract_world_builder;

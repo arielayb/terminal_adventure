@@ -17,48 +17,61 @@ pub trait AbstractEnemyEntity {
 
 // Dynamic abstract factory using Box pointer
 pub trait AbstractEntityFactory {
-    fn player_entity(&self) -> Box<dyn AbstractPlayerEntity>;
-    fn npc_entity(&self) -> Box<dyn AbstractNpcEntity>;
-    fn enemy_enity(&self) -> Box<dyn AbstractEnemyEntity>;
+    fn create_player_entity(&self, player_name: String) -> Box<dyn AbstractPlayerEntity>;
+    fn create_npc_entity(&self, npc_name: String) -> Box<dyn AbstractNpcEntity>;
+    fn create_enemy_enity(&self, enemy_name: String) -> Box<dyn AbstractEnemyEntity>;
 }
 
 pub struct EntityFactory {}
 
 impl AbstractEntityFactory for EntityFactory {
-    fn player_entity(&self) -> Box<dyn AbstractPlayerEntity> {
-        return Box::new(NameText {});
+    fn create_player_entity(&self, player_name: String) -> Box<dyn AbstractPlayerEntity> {
+        return Box::new(PlayerEntity {name: player_name, health: 10, tech: 0});
     }
 
-    fn npc_entity(&self) -> Box<dyn AbstractNpcEntity> {
-        return Box::new(TextBox {});
+    fn create_npc_entity(&self, npc_name: String) -> Box<dyn AbstractNpcEntity> {
+        return Box::new(NpcEntity {name: npc_name, health: 10});
     }
 
-    fn enemy_enity(&self) -> Box<dyn AbstractEnemyEntity>{
-        return Box::new(TypeDialogue {});
-    }
-
-}
-
-struct NameText {}
-
-impl AbstractNameTextDialogue for NameText{
-    fn name_dialogue(&self, name: String) -> String {
-        return String::from(name);
+    fn create_enemy_enity(&self, enemy_name: String) -> Box<dyn AbstractEnemyEntity>{
+        return Box::new(EnemyEntity {name: enemy_name, health: 10, tech: 0});
     }
 }
 
-struct TextBox {}
+#[derive(Component, Clone, Debug)]
+struct PlayerEntity {
+    name: String,
+    health: i32,
+    tech: i32,
+}
 
-impl AbstractTextBoxDialogue for TextBox{
-    fn textbox_dialogue(&self, textbox: String) -> String {
-        return String::from(textbox);
+impl AbstractPlayerEntity for PlayerEntity{
+    fn player_entity(&self, name: String) -> bevy::ecs::component {
+        return bevy::ecs::component;
     }
 }
 
-struct TypeDialogue {}
+#[derive(Component, Clone, Debug)]
+struct NpcEntity {
+    name: String,
+    health: i32,
+}
 
-impl AbstractTypeDialogue for TypeDialogue{
-    fn type_dialogue(&self, type_dialogue: String) -> String {
-        return String::from(type_dialogue);
+impl AbstractNpcEntity for NpcEntity{
+    fn npc_entity(&self, name: String) -> bevy::ecs::component {
+        return bevy::ecs::component;
+    }
+}
+
+#[derive(Component, Clone, Debug)]
+struct EnemyEntity {
+    name: String,
+    health: i32,
+    tech: i32,
+}
+
+impl AbstractEnemyEntity for EnemyEntity{
+    fn enemy_enity(&self, name: String) -> bevy::ecs::component {
+        return bevy::ecs::component;
     }
 }

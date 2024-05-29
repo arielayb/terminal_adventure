@@ -6,3 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+# NOTE: Remember to revert this before releasing your game! 
+# Otherwise you will need to include libbevy_dylib alongside your game if you want it to run. 
+# If you remove the "dynamic" feature, your game executable can run standalone.
+bevy = { version = "0.12.0", features = ["dynamic_linking"] }

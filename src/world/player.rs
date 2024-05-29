@@ -1,5 +1,4 @@
 // use std::collections::binary_heap::Iter;
-
 use crate::states::*;
 use std::collections::HashSet;
 use bevy::{prelude::*, utils::hashbrown::Equivalent};
@@ -7,6 +6,7 @@ use bevy_ecs_ldtk::prelude::*;
 use bevy::input::ButtonState;
 use bevy::input::keyboard::KeyboardInput;
 use bevy_aseprite::{anim::AsepriteAnimation, AsepriteBundle, AsepritePlugin};
+use std::ptr;
 
 // Tag component used to tag entities added on the game screen
 #[derive(Component)]
@@ -163,5 +163,25 @@ fn cache_wall_locations(
 
             *level_walls = new_level_walls;
         }
+    }
+}
+
+// Tests for the abstract factory dialogue class
+#[cfg(test)]
+mod test{
+    use entity_factory::*;
+
+    #[test]
+    fn test_init_entity_factory(){
+        let entity_fact = EntityFactory {};
+        let player_factory = AbstractEntityFactory::create_player_entity(&entity_fact); 
+        let npc_factory = AbstractEntityFactory::create_npc_entity(&entity_fact); 
+        let enemy_factory = AbstractEntityFactory::create_enemy_entity(&entity_fact);
+        
+        let player = player_factory.player_entity(String::from("ariel"));
+        let npc = npc_factory.npc_entity(String::from("npc1"));
+        let enemey = enemy_factory.enemy_entity(String::from("enemy1"));
+
+        assert_eq!(&player, player.is_null());
     }
 }
