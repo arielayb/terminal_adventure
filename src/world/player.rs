@@ -174,11 +174,21 @@ mod test{
     #[test]
     fn test_init_entity_factory(){
         let entity_fact = EntityFactory {};
-        let player_factory = AbstractEntityFactory::create_player_entity(&entity_fact); 
-        let npc_factory = AbstractEntityFactory::create_npc_entity(&entity_fact); 
-        let enemy_factory = AbstractEntityFactory::create_enemy_entity(&entity_fact);
+        let player_factory = AbstractEntityFactory::create_player_entity(&entity_fact, String::from("ariel")); 
+        let npc_factory = AbstractEntityFactory::create_npc_entity(&entity_fact, String::from("Bob")); 
+        let enemy_factory = AbstractEntityFactory::create_enemy_entity(&entity_fact, String::from("bandit"));
         
-        let player = player_factory.player_entity(String::from("ariel"));
+        let player_cmd =  Commands.spawn(
+            PlayerBundle{
+                        PlayerEntity{
+                            name: player_name,
+                            health: hp,
+                            tech: tp,
+                    },
+                    ..Default::default()
+                });
+
+        let player = player_factory.player_entity(String::from("ariel"), 10, 5);
         let npc = npc_factory.npc_entity(String::from("npc1"));
         let enemey = enemy_factory.enemy_entity(String::from("enemy1"));
 

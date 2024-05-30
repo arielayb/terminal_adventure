@@ -2,17 +2,18 @@
  * An Abstract factory class for entities/player
  */
 use bevy::prelude::*;
+use bevy_ecs_ldtk::prelude::*;
 
 pub trait AbstractPlayerEntity {
-    fn player_entity(&self, name: String) -> bevy::ecs::component;
+    fn player_entity(&self, name: String, hp: i32, tp: i32, mut commands: Commands);
 }
 
 pub trait AbstractNpcEntity {
-    fn npc_entity(&self, name: String) -> bevy::ecs::component;
+    fn npc_entity(&self, name: String, hp: i32, mut commands: Commands);
 }
 
 pub trait AbstractEnemyEntity {
-    fn enemy_enity(&self, name: String) -> bevy::ecs::component;
+    fn enemy_enity(&self, name: String, hp: i32, tp: i32, mut commands: Commands);
 }
 
 // Dynamic abstract factory using Box pointer
@@ -38,6 +39,15 @@ impl AbstractEntityFactory for EntityFactory {
     }
 }
 
+#[derive(Default, Bundle, LdtkEntity)]
+struct PlayerBundle {
+    player: PlayerEntity,
+    #[sprite_sheet_bundle]
+    sprite_sheet_bundle: SpriteSheetBundle,
+    #[grid_coords]
+    grid_coords: GridCoords,
+}
+
 #[derive(Component, Clone, Debug)]
 struct PlayerEntity {
     name: String,
@@ -46,8 +56,16 @@ struct PlayerEntity {
 }
 
 impl AbstractPlayerEntity for PlayerEntity{
-    fn player_entity(&self, name: String) -> bevy::ecs::component {
-        return bevy::ecs::component;
+    fn player_entity(&self, player_name: String, hp: i32, tp: i32) {
+        commands.spawn(
+    PlayerBundle{
+                PlayerEntity{
+                    name: player_name,
+                    health: hp,
+                    tech: tp,
+            },
+            ..Default::default()
+        });
     }
 }
 
@@ -58,8 +76,8 @@ struct NpcEntity {
 }
 
 impl AbstractNpcEntity for NpcEntity{
-    fn npc_entity(&self, name: String) -> bevy::ecs::component {
-        return bevy::ecs::component;
+    fn npc_entity(&self, npc_name: String, hp: i32, mut commands: Commands) {
+
     }
 }
 
@@ -71,7 +89,7 @@ struct EnemyEntity {
 }
 
 impl AbstractEnemyEntity for EnemyEntity{
-    fn enemy_enity(&self, name: String) -> bevy::ecs::component {
-        return bevy::ecs::component;
+    fn enemy_enity(&self, enemy_name: String, hp: i32, tp: i32, mut commands: Commands) {
+        
     }
 }
