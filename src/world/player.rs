@@ -38,7 +38,7 @@ impl Plugin for Player {
         app.add_systems(OnEnter(GameState::Playing), spawn_player)
             .add_plugins(AsepritePlugin)
             .register_ldtk_entity::<PlayerBundle>("Player")
-            .register_ldtk_int_cell::<WallBundle>(1)
+            .register_ldtk_int_cell_for_layer::<WallBundle>("Walls", 1)
             .init_resource::<LevelWalls>()
             .add_systems(Update, (move_player_from_input, translate_grid_coords_entities, cache_wall_locations))
             .add_systems(OnExit(GameState::Playing), despawn_screen::<OnGameScreen>);
@@ -178,19 +178,9 @@ mod test{
         let npc_factory = AbstractEntityFactory::create_npc_entity(&entity_fact, String::from("Bob")); 
         let enemy_factory = AbstractEntityFactory::create_enemy_entity(&entity_fact, String::from("bandit"));
         
-        let player_cmd =  Commands.spawn(
-            PlayerBundle{
-                        PlayerEntity{
-                            name: player_name,
-                            health: hp,
-                            tech: tp,
-                    },
-                    ..Default::default()
-                });
-
         let player = player_factory.player_entity(String::from("ariel"), 10, 5);
-        let npc = npc_factory.npc_entity(String::from("npc1"));
-        let enemey = enemy_factory.enemy_entity(String::from("enemy1"));
+        // let npc = npc_factory.npc_entity(String::from("npc1"));
+        // let enemey = enemy_factory.enemy_entity(String::from("enemy1"));
 
         assert_eq!(&player, player.is_null());
     }

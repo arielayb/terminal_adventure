@@ -18,8 +18,8 @@ pub struct World;
 impl Plugin for World {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::Playing), world_setup)
-            .add_plugins(player::Player)
             .add_plugins(non_playable_char::Npc)
+            .add_plugins(player::Player)
             .add_plugins(LdtkPlugin)
             // .register_ldtk_entity::<PlayerBundle>("Player")
             .insert_resource(LevelSelection::index(0))

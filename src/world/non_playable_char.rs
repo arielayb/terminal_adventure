@@ -2,8 +2,6 @@ use crate::states::*;
 use std::collections::HashSet;
 use bevy::{prelude::*, utils::hashbrown::Equivalent};
 use bevy_ecs_ldtk::prelude::*;
-use bevy::input::ButtonState;
-use bevy::input::keyboard::KeyboardInput;
 use bevy_aseprite::{anim::AsepriteAnimation, AsepriteBundle, AsepritePlugin};
 
 // Tag component used to tag entities added on the game screen
@@ -35,10 +33,38 @@ impl Plugin for Npc {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::Playing), spawn_npc)
             .register_ldtk_entity::<NpcBundle>("NPC")
-            .add_systems(Update, (move_npc, translate_grid_coords_entities))
+            .register_ldtk_int_cell_for_layer::<WallBundle>("Walls", 1)
+            .init_resource::<LevelWalls>()
+            .add_systems(Update, (move_npc, translate_grid_coords_entities, cache_wall_locations))
             .add_systems(OnExit(GameState::Playing), despawn_screen::<OnGameScreen>);
     }
 }
+
+#[derive(Default, Resource)]
+struct LevelWalls {
+    wall_locations: HashSet<GridCoords>,
+    level_width: i32,
+    level_height: i32,
+}
+
+impl LevelWalls {
+    fn in_wall(&self, grid_coords: &GridCoords) -> bool {
+        grid_coords.x < 0
+            || grid_coords.y < 0
+            || grid_coords.x >= self.level_width
+            || grid_coords.y >= self.level_height
+            || self.wall_locations.contains(grid_coords)
+    }
+}
+
+#[derive(Default, Component)]
+struct Wall;
+
+#[derive(Default, Bundle, LdtkIntCell)]
+struct WallBundle {
+    wall: Wall,
+}
+
 
 fn spawn_npc(mut commands: Commands, asset_server: Res<AssetServer>,) {
     // commands
@@ -74,22 +100,22 @@ fn move_npc(
     mut npc: Query<&mut GridCoords, With<Npc>>,
     level_walls: Res<LevelWalls>,
 ) {
-    let movement_direction = if input.just_pressed(KeyCode::W) {
-        GridCoords::new(0, 1)
-    } else if input.just_pressed(KeyCode::A) {
-        GridCoords::new(-1, 0)
-    } else if input.just_pressed(KeyCode::S) {
-        GridCoords::new(0, -1)
-    } else if input.just_pressed(KeyCode::D) {
-        GridCoords::new(1, 0)
-    } else {
-        return;
-    };
+    // let movement_direction = if input.just_pressed(KeyCode::W) {
+        let movement_direction = GridCoords::new(0, 1);
+    // } else if input.just_pressed(KeyCode::A) {
+        // let movement_direction = GridCoords::new(-1, 0);
+    // } else if input.just_pressed(KeyCode::S) {
+    //     GridCoords::new(0, -1)
+    // } else if input.just_pressed(KeyCode::D) {
+    //     GridCoords::new(1, 0)
+    // } else {
+    //     return;
+    // };
 
-    for mut player_grid_coords in players.iter_mut() {
-        let destination = *player_grid_coords + movement_direction;
+    for mut npc_grid_coords in npc.iter_mut() {
+        let destination = *npc_grid_coords + movement_direction;
         if !level_walls.in_wall(&destination) {
-            *player_grid_coords = destination;
+            *npc_grid_coords = destination;
         }
     }
 }
