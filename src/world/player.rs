@@ -182,6 +182,10 @@ mod test{
         // let npc = npc_factory.npc_entity(String::from("npc1"));
         // let enemey = enemy_factory.enemy_entity(String::from("enemy1"));
 
-        assert_eq!(&player, player.is_null());
+        let player_ent = PlayerEntity{name: String::from("ariel"), health: 10, tech: 5};
+
+        assert_eq!(&player.name, &player_ent.name);
+        assert_eq!(&player.health, &player_ent.health);
+        assert_eq!(&player.tech, &player_ent.tech);
     }
 }
