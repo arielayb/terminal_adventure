@@ -1,46 +1,33 @@
 // use std::collections::binary_heap::Iter;
 use crate::states::*;
+use rand::prelude::*;
 use std::collections::HashSet;
 use bevy::{prelude::*, utils::hashbrown::Equivalent};
 use bevy_ecs_ldtk::prelude::*;
-use bevy::input::ButtonState;
 use bevy::input::keyboard::KeyboardInput;
 use bevy_aseprite::{anim::AsepriteAnimation, AsepriteBundle, AsepritePlugin};
-use std::ptr;
+
+
+mod player;
+mod npc;
 
 // Tag component used to tag entities added on the game screen
 #[derive(Component)]
 struct OnGameScreen;
 
-mod sprites {
-    use bevy_aseprite::aseprite;
-    aseprite!(pub Player, "workers/workers1.aseprite");
-}
-
-#[derive(Default, Bundle, LdtkEntity)]
-struct PlayerBundle {
-    player: Player,
-    #[sprite_sheet_bundle]
-    sprite_sheet_bundle: SpriteSheetBundle,
-    #[grid_coords]
-    grid_coords: GridCoords,
-}
-
-#[derive(Component, Clone, Copy, Debug)]
-struct PlayerTag;
-
-// // This plugin will contain the game.
+// This plugin will contain the game.
 #[derive(Default, Component)]
-pub struct Player;
+pub struct EntityLoader;
 
-impl Plugin for Player {
+impl Plugin for EntityLoader {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::Playing), spawn_player)
             .add_plugins(AsepritePlugin)
-            .register_ldtk_entity::<PlayerBundle>("Player")
+            .register_ldtk_entity::<player::PlayerBundle>("Player")
+            .register_ldtk_entity::<npc::NpcBundle>("NPC")
             .register_ldtk_int_cell_for_layer::<WallBundle>("Walls", 1)
             .init_resource::<LevelWalls>()
-            .add_systems(Update, (move_player_from_input, translate_grid_coords_entities, cache_wall_locations))
+            .add_systems(Update, (move_player_from_input, move_npc, translate_grid_coords_entities, cache_wall_locations))
             .add_systems(OnExit(GameState::Playing), despawn_screen::<OnGameScreen>);
     }
 }
@@ -70,7 +57,10 @@ struct WallBundle {
     wall: Wall,
 }
 
-fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>,) {
+fn spawn_player(mut commands: Commands, 
+                new_players: Query<Entity, Added<player::Player>>, 
+                asset_server: Res<AssetServer>) 
+{
     // commands
     //     .spawn(AsepriteBundle {
     //         aseprite: asset_server.load("workers/workers1.aseprite"),
@@ -85,23 +75,22 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>,) {
     //     .insert(PlayerTag);
 
     commands.spawn(
-        PlayerBundle{
-            player: Player,
-            // sprite_sheet_bundle: SpriteSheetBundle { 
-            //     transform: Transform {
-            //         scale: Vec3::splat(1.),
-            //         translation: Vec3::new(0., 80., 0.),
-            //         ..Default::default()
-            //     },
-            //     ..Default::default()
-            // },
+        player::PlayerBundle{
+            player: player::Player,
             ..Default::default()
-        }
-    ).insert(Player);
+        }).insert(player::Player);
+
+    commands.spawn(
+            npc::NpcBundle{
+                npc: npc::Npc,
+                ..Default::default()
+            }
+        ).insert(npc::Npc);
 }
 
 fn move_player_from_input(
-    mut players: Query<&mut GridCoords, With<Player>>,
+    // mut players: Query<&mut GridCoords, With<Player>>,
+    mut players: Query<&mut GridCoords, With<(player::Player)>>,
     mut input: Res<Input<KeyCode>>,
     level_walls: Res<LevelWalls>,
 ) {
@@ -121,6 +110,33 @@ fn move_player_from_input(
         let destination = *player_grid_coords + movement_direction;
         if !level_walls.in_wall(&destination) {
             *player_grid_coords = destination;
+        }
+    }
+}
+
+fn move_npc(
+    mut npc: Query<&mut GridCoords, With<npc::Npc>>,
+    level_walls: Res<LevelWalls>,
+) {
+    let mut rng = thread_rng();
+    let x = rng.gen_range(-1..1);
+    let y  = rng.gen_range(-1..1);
+    // let movement_direction = if input.just_pressed(KeyCode::W) {
+        let movement_direction = GridCoords::new(x, y);
+    // } else if input.just_pressed(KeyCode::A) {
+        // let movement_direction = GridCoords::new(-1, 0);
+    // } else if input.just_pressed(KeyCode::S) {
+    //     GridCoords::new(0, -1)
+    // } else if input.just_pressed(KeyCode::D) {
+    //     GridCoords::new(1, 0)
+    // } else {
+    //     return;
+    // };
+
+    for mut npc_grid_coords in npc.iter_mut() {
+        let destination = *npc_grid_coords + movement_direction;
+        if !level_walls.in_wall(&destination) {
+            *npc_grid_coords = destination;
         }
     }
 }
@@ -172,20 +188,58 @@ mod test{
     use entity_factory::*;
 
     #[test]
-    fn test_init_entity_factory(){
+    fn test_init_player_entity_factory(){
         let entity_fact = EntityFactory {};
         let player_factory = AbstractEntityFactory::create_player_entity(&entity_fact, String::from("ariel")); 
-        let npc_factory = AbstractEntityFactory::create_npc_entity(&entity_fact, String::from("Bob")); 
-        let enemy_factory = AbstractEntityFactory::create_enemy_entity(&entity_fact, String::from("bandit"));
         
         let player = player_factory.player_entity(String::from("ariel"), 10, 5);
-        // let npc = npc_factory.npc_entity(String::from("npc1"));
-        // let enemey = enemy_factory.enemy_entity(String::from("enemy1"));
-
         let player_ent = PlayerEntity{name: String::from("ariel"), health: 10, tech: 5};
 
         assert_eq!(&player.name, &player_ent.name);
         assert_eq!(&player.health, &player_ent.health);
         assert_eq!(&player.tech, &player_ent.tech);
     }
+
+    #[test]
+    fn test_init_npc_entity_factory(){
+        let entity_fact = EntityFactory {};
+        let npc_factory = AbstractEntityFactory::create_npc_entity(&entity_fact, String::from("Bob")); 
+        
+        let npc = npc_factory.npc_entity(String::from("Bob"), 10);
+        // let npc = npc_factory.npc_entity(String::from("npc1"));
+        // let enemey = enemy_factory.enemy_entity(String::from("enemy1"));
+
+        let npc_ent = NpcEntity{name: String::from("Bob"), health: 10};
+
+        assert_eq!(&npc.name, &npc_ent.name);
+        assert_eq!(&npc.health, &npc_ent.health);
+    }
+    // #[test]
+    // fn test_init_npc_entity_factory(){
+    //     let entity_fact = EntityFactory {};
+    //     let npc_factory = AbstractEntityFactory::create_npc_entity(&entity_fact, String::from("Bob")); 
+        
+    //     let npc = npc_factory.npc_entity(String::from("Bob"), 10);
+    //     // let npc = npc_factory.npc_entity(String::from("npc1"));
+    //     // let enemey = enemy_factory.enemy_entity(String::from("enemy1"));
+
+    //     let npc_ent = NpcEntity{name: String::from("Bob"), health: 10};
+
+    //     assert_eq!(&npc.name, &npc_ent.name);
+    //     assert_eq!(&npc.health, &npc_ent.health);
+    // }
+
+    // #[test]
+    // fn test_init_enemy_entity_factory(){
+    //     let entity_fact = EntityFactory {};
+    //     let enemy_factory = AbstractEntityFactory::create_enemy_entity(&entity_fact, String::from("bandit"));
+        
+    //     let enemy = enemy_factory.enemy_entity(String::from("bandit"), 10, 5);
+
+    //     let enemy_ent = EnemyEntity{name: String::from("bandit"), health: 10, tech: 5};
+
+    //     assert_eq!(&enemy.name, &enemy_ent.name);
+    //     assert_eq!(&enemy.health, &enemy_ent.health);
+    //     assert_eq!(&enemy.tech, &enemy_ent.tech);
+    // }
 }

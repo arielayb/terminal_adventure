@@ -3,10 +3,7 @@ use bevy::prelude::*;
 use bevy_aseprite::{anim::AsepriteAnimation, AsepriteBundle, AsepritePlugin};
 use bevy_ecs_ldtk::prelude::*;
 
-mod player;
-mod non_playable_char;
-mod abstract_world_builder;
-mod farm;
+mod entity_loader;
 
 // Tag component used to tag entities added on the game screen
 #[derive(Component)]
@@ -18,8 +15,8 @@ pub struct World;
 impl Plugin for World {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::Playing), world_setup)
-            .add_plugins(non_playable_char::Npc)
-            .add_plugins(player::Player)
+            // .add_plugins(non_playable_char::Npc)
+            .add_plugins(entity_loader::EntityLoader)
             .add_plugins(LdtkPlugin)
             // .register_ldtk_entity::<PlayerBundle>("Player")
             .insert_resource(LevelSelection::index(0))
@@ -27,6 +24,7 @@ impl Plugin for World {
     }
 }
 
+// setup the world and camera
 fn world_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     //commands.spawn(Camera2dBundle::default());
     

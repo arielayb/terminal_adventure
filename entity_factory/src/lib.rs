@@ -8,11 +8,11 @@ pub trait AbstractPlayerEntity {
 }
 
 pub trait AbstractNpcEntity {
-    fn npc_entity(&self, name: String, hp: i32);
+    fn npc_entity(&self, name: String, hp: i32) -> NpcEntity;
 }
 
 pub trait AbstractEnemyEntity {
-    fn enemy_entity(&self, name: String, hp: i32, tp: i32);
+    fn enemy_entity(&self, name: String, hp: i32, tp: i32) -> EnemyEntity;
 }
 
 // Dynamic abstract factory using Box pointer
@@ -58,26 +58,37 @@ impl AbstractPlayerEntity for PlayerEntity{
 }
 
 #[derive(Component, Clone, Debug)]
-struct NpcEntity {
-    name: String,
-    health: i32,
+pub struct NpcEntity {
+    pub name: String,
+    pub health: i32,
 }
 
 impl AbstractNpcEntity for NpcEntity{
-    fn npc_entity(&self, npc_name: String, hp: i32) {
+    fn npc_entity(&self, npc_name: String, hp: i32) -> NpcEntity {
+        let npc_entity = NpcEntity{
+            name: npc_name,
+            health: hp,
+        };
 
+        return npc_entity;
     }
 }
 
 #[derive(Component, Clone, Debug)]
-struct EnemyEntity {
-    name: String,
-    health: i32,
-    tech: i32,
+pub struct EnemyEntity {
+    pub name: String,
+    pub health: i32,
+    pub tech: i32,
 }
 
 impl AbstractEnemyEntity for EnemyEntity{
-    fn enemy_entity(&self, enemy_name: String, hp: i32, tp: i32) {
-        
+    fn enemy_entity(&self, enemy_name: String, hp: i32, tp: i32) -> EnemyEntity{
+        let enemy_entity = EnemyEntity{
+            name: enemy_name,
+            health: hp,
+            tech: tp,
+        };
+
+        return enemy_entity;
     }
 }
