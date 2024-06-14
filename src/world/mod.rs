@@ -15,10 +15,8 @@ pub struct World;
 impl Plugin for World {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::Playing), world_setup)
-            // .add_plugins(non_playable_char::Npc)
             .add_plugins(entity_loader::EntityLoader)
             .add_plugins(LdtkPlugin)
-            // .register_ldtk_entity::<PlayerBundle>("Player")
             .insert_resource(LevelSelection::index(0))
             .add_systems(OnExit(GameState::Playing), despawn_screen::<OnGameScreen>);
     }

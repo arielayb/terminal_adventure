@@ -2,11 +2,11 @@
 use crate::states::*;
 use rand::prelude::*;
 use std::collections::HashSet;
+use std::{thread, time::Duration};
 use bevy::{prelude::*, utils::hashbrown::Equivalent};
 use bevy_ecs_ldtk::prelude::*;
 use bevy::input::keyboard::KeyboardInput;
 use bevy_aseprite::{anim::AsepriteAnimation, AsepriteBundle, AsepritePlugin};
-
 
 mod player;
 mod npc;
@@ -21,7 +21,7 @@ pub struct EntityLoader;
 
 impl Plugin for EntityLoader {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::Playing), spawn_player)
+        app.add_systems(OnEnter(GameState::Playing), (spawn_player, spawn_npc))
             .add_plugins(AsepritePlugin)
             .register_ldtk_entity::<player::PlayerBundle>("Player")
             .register_ldtk_entity::<npc::NpcBundle>("NPC")
@@ -57,9 +57,14 @@ struct WallBundle {
     wall: Wall,
 }
 
-fn spawn_player(mut commands: Commands, 
-                new_players: Query<Entity, Added<player::Player>>, 
-                asset_server: Res<AssetServer>) 
+
+#[derive(Resource)]
+pub struct NpcWalkConfig {
+    /// How often to make the npc move? (repeating timer)
+    pub timer: Timer,
+}
+
+fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) 
 {
     // commands
     //     .spawn(AsepriteBundle {
@@ -79,17 +84,22 @@ fn spawn_player(mut commands: Commands,
             player: player::Player,
             ..Default::default()
         }).insert(player::Player);
+}
 
+
+fn spawn_npc(mut commands: Commands, 
+    time: Res<Time>,
+    asset_server: Res<AssetServer>) 
+{
     commands.spawn(
-            npc::NpcBundle{
-                npc: npc::Npc,
-                ..Default::default()
-            }
-        ).insert(npc::Npc);
+        npc::NpcBundle{
+            npc: npc::Npc,
+            ..Default::default()
+        }
+    ).insert(npc::Npc);
 }
 
 fn move_player_from_input(
-    // mut players: Query<&mut GridCoords, With<Player>>,
     mut players: Query<&mut GridCoords, With<(player::Player)>>,
     mut input: Res<Input<KeyCode>>,
     level_walls: Res<LevelWalls>,
@@ -115,29 +125,31 @@ fn move_player_from_input(
 }
 
 fn move_npc(
+    time: Res<Time>,
     mut npc: Query<&mut GridCoords, With<npc::Npc>>,
     level_walls: Res<LevelWalls>,
 ) {
     let mut rng = thread_rng();
-    let x = rng.gen_range(-1..1);
-    let y  = rng.gen_range(-1..1);
+    
+    let x: i32 = rng.gen_range(-1..=1);
+    let y: i32  = rng.gen_range(-1..=1);
+ 
+    // // tick the timer
+    // let mut config = Timer::new(Duration::from_secs(10), TimerMode::Repeating);
+    // config.tick(time.delta());
     // let movement_direction = if input.just_pressed(KeyCode::W) {
-        let movement_direction = GridCoords::new(x, y);
-    // } else if input.just_pressed(KeyCode::A) {
-        // let movement_direction = GridCoords::new(-1, 0);
-    // } else if input.just_pressed(KeyCode::S) {
-    //     GridCoords::new(0, -1)
-    // } else if input.just_pressed(KeyCode::D) {
-    //     GridCoords::new(1, 0)
-    // } else {
-    //     return;
-    // };
+    //let mut config = Timer::from_seconds(5.0, TimerMode::Repeating);
+    
+    let movement_direction = GridCoords::new(x, y);
 
     for mut npc_grid_coords in npc.iter_mut() {
-        let destination = *npc_grid_coords + movement_direction;
-        if !level_walls.in_wall(&destination) {
-            *npc_grid_coords = destination;
-        }
+        // tick the timer
+        // if config.timer.finished() {
+           let destination = *npc_grid_coords + movement_direction;
+            if !level_walls.in_wall(&destination) {
+                *npc_grid_coords = destination;
+            }
+        // }
     }
 }
 
