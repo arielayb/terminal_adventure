@@ -15,9 +15,22 @@ pub struct NpcBundle {
 #[derive(Default, Component)]
 pub struct Npc;
 
-// #[derive(Resource)]
-// pub struct NpcWalkConfig {
-//     /// How often to make the npc move? (repeating timer)
-//     pub timer: Timer,
-// }
+#[derive(Resource, Debug)]
+pub struct NpcWalkConfig {
+    /// How often to make the npc move? (repeating timer)
+    pub walk_timer: Timer,
+}
 
+impl NpcWalkConfig {
+    pub fn new() -> Self {
+        Self {
+            walk_timer: Timer::from_seconds(5.0, TimerMode::Repeating),
+        }
+    }
+}
+
+impl Default for NpcWalkConfig {
+    fn default() -> Self {
+        Self::new()
+    }
+}

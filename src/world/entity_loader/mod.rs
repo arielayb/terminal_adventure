@@ -1,5 +1,5 @@
-// use std::collections::binary_heap::Iter;
 use crate::states::*;
+use bevy::audio::CpalSample;
 use rand::prelude::*;
 use std::collections::HashSet;
 use std::{thread, time::Duration};
@@ -27,6 +27,7 @@ impl Plugin for EntityLoader {
             .register_ldtk_entity::<npc::NpcBundle>("NPC")
             .register_ldtk_int_cell_for_layer::<WallBundle>("Walls", 1)
             .init_resource::<LevelWalls>()
+            .init_resource::<npc::NpcWalkConfig>()
             .add_systems(Update, (move_player_from_input, move_npc, translate_grid_coords_entities, cache_wall_locations))
             .add_systems(OnExit(GameState::Playing), despawn_screen::<OnGameScreen>);
     }
@@ -57,13 +58,6 @@ struct WallBundle {
     wall: Wall,
 }
 
-
-#[derive(Resource)]
-pub struct NpcWalkConfig {
-    /// How often to make the npc move? (repeating timer)
-    pub timer: Timer,
-}
-
 fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) 
 {
     // commands
@@ -86,10 +80,7 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>)
         }).insert(player::Player);
 }
 
-
-fn spawn_npc(mut commands: Commands, 
-    time: Res<Time>,
-    asset_server: Res<AssetServer>) 
+fn spawn_npc(mut commands: Commands, asset_server: Res<AssetServer>) 
 {
     commands.spawn(
         npc::NpcBundle{
@@ -127,29 +118,27 @@ fn move_player_from_input(
 fn move_npc(
     time: Res<Time>,
     mut npc: Query<&mut GridCoords, With<npc::Npc>>,
+    mut npc_timer: ResMut<npc::NpcWalkConfig>,
     level_walls: Res<LevelWalls>,
 ) {
     let mut rng = thread_rng();
     
     let x: i32 = rng.gen_range(-1..=1);
     let y: i32  = rng.gen_range(-1..=1);
- 
-    // // tick the timer
-    // let mut config = Timer::new(Duration::from_secs(10), TimerMode::Repeating);
-    // config.tick(time.delta());
-    // let movement_direction = if input.just_pressed(KeyCode::W) {
-    //let mut config = Timer::from_seconds(5.0, TimerMode::Repeating);
-    
+
+    // tick the timer
+    npc_timer.walk_timer.tick(time.delta());
+    println!("{npc_timer:?}");
+   
     let movement_direction = GridCoords::new(x, y);
 
     for mut npc_grid_coords in npc.iter_mut() {
-        // tick the timer
-        // if config.timer.finished() {
+        if npc_timer.walk_timer.finished() {
            let destination = *npc_grid_coords + movement_direction;
             if !level_walls.in_wall(&destination) {
                 *npc_grid_coords = destination;
             }
-        // }
+        }
     }
 }
 
