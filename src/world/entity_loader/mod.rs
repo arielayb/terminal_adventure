@@ -1,5 +1,6 @@
 use crate::states::*;
 use bevy::audio::CpalSample;
+use npc::Npc;
 use rand::prelude::*;
 use std::collections::HashSet;
 use std::{thread, time::Duration};
@@ -23,12 +24,16 @@ impl Plugin for EntityLoader {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::Playing), (spawn_player, spawn_npc))
             .add_plugins(AsepritePlugin)
-            .register_ldtk_entity::<player::PlayerBundle>("Player")
             .register_ldtk_entity::<npc::NpcBundle>("NPC")
+            .register_ldtk_entity::<player::PlayerBundle>("Player")
             .register_ldtk_int_cell_for_layer::<WallBundle>("Walls", 1)
             .init_resource::<LevelWalls>()
             .init_resource::<npc::NpcWalkConfig>()
-            .add_systems(Update, (move_player_from_input, move_npc, translate_grid_coords_entities, cache_wall_locations))
+            .add_systems(Update, (move_player_from_input, 
+                                                    move_npc, 
+                                                    translate_grid_coords_entities, 
+                                                    cache_wall_locations, 
+                                                    npc_interact))
             .add_systems(OnExit(GameState::Playing), despawn_screen::<OnGameScreen>);
     }
 }
@@ -128,8 +133,7 @@ fn move_npc(
 
     // tick the timer
     npc_timer.walk_timer.tick(time.delta());
-    println!("{npc_timer:?}");
-   
+       
     let movement_direction = GridCoords::new(x, y);
 
     for mut npc_grid_coords in npc.iter_mut() {
@@ -179,6 +183,25 @@ fn cache_wall_locations(
             };
 
             *level_walls = new_level_walls;
+        }
+    }
+}
+
+fn npc_interact(
+    players: Query<&GridCoords, (With<player::Player>, Changed<GridCoords>)>,
+    npc: Query<&GridCoords, With<npc::Npc>>,
+    input: Res<Input<KeyCode>>,
+){
+    let mut collide: bool = false;
+    if players
+        .iter()
+        .zip(npc.iter())
+        .any(|(player_grid_coords, npc_grid_coords)| player_grid_coords == npc_grid_coords)
+    {
+        info!("Npc collision detected...");
+
+        if input.just_pressed(KeyCode::E) {
+            info!("Hello, Ariel!");
         }
     }
 }

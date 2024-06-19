@@ -2,6 +2,10 @@ use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
 use std::time::Duration;
 
+// This plugin will contain the NPC or events.
+#[derive(Default, Component)]
+pub struct Npc;
+
 #[derive(Default, Bundle, LdtkEntity)]
 pub struct NpcBundle {
     pub npc: Npc,
@@ -10,10 +14,6 @@ pub struct NpcBundle {
     #[grid_coords]
     pub grid_coords: GridCoords,
 }
-
-// This plugin will contain the NPC or events.
-#[derive(Default, Component)]
-pub struct Npc;
 
 #[derive(Resource, Debug)]
 pub struct NpcWalkConfig {
