@@ -1,6 +1,7 @@
 use crate::states::*;
 use bevy::audio::CpalSample;
 use npc::Npc;
+use player::Player;
 use rand::prelude::*;
 use std::collections::HashSet;
 use std::{thread, time::Duration};
@@ -29,7 +30,7 @@ impl Plugin for EntityLoader {
             .register_ldtk_int_cell_for_layer::<WallBundle>("Walls", 1)
             .init_resource::<LevelWalls>()
             .init_resource::<npc::NpcWalkConfig>()
-            .add_systems(Update, (move_player_from_input, 
+            .add_systems(Update, (player_control, 
                                                     move_npc, 
                                                     translate_grid_coords_entities, 
                                                     cache_wall_locations, 
@@ -63,6 +64,12 @@ struct WallBundle {
     wall: Wall,
 }
 
+// #[derive(Default, Component)]
+// struct PlayerEvents{
+//     interact: bool,
+// }
+
+
 fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) 
 {
     // commands
@@ -82,7 +89,7 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>)
         player::PlayerBundle{
             player: player::Player,
             ..Default::default()
-        }).insert(player::Player);
+        }).insert(player::PlayerEvents{interact: false});
 }
 
 fn spawn_npc(mut commands: Commands, asset_server: Res<AssetServer>) 
@@ -92,14 +99,27 @@ fn spawn_npc(mut commands: Commands, asset_server: Res<AssetServer>)
             npc: npc::Npc,
             ..Default::default()
         }
-    ).insert(npc::Npc);
+    );
 }
 
-fn move_player_from_input(
+fn player_control(
     mut players: Query<&mut GridCoords, With<(player::Player)>>,
+    mut player_event: Query<&mut player::PlayerEvents, With<(player::PlayerEvents)>>,
     mut input: Res<Input<KeyCode>>,
     level_walls: Res<LevelWalls>,
 ) {
+    if input.pressed(KeyCode::E) {
+        info!("e key pressed");
+        // interaction with objects
+        let mut touch = player_event.single_mut();
+        touch.interact = true;
+    } 
+    // else if input.just_released(KeyCode::E) {
+    //     let mut touch = player_event.single_mut();
+    //     touch.interact = false;
+    //     info!("interact: {:?}", touch.interact);
+    // }
+
     let movement_direction = if input.just_pressed(KeyCode::W) {
         GridCoords::new(0, 1)
     } else if input.just_pressed(KeyCode::A) {
@@ -122,7 +142,7 @@ fn move_player_from_input(
 
 fn move_npc(
     time: Res<Time>,
-    mut npc: Query<&mut GridCoords, With<npc::Npc>>,
+    mut npc: Query<&mut GridCoords, With<(npc::Npc, npc::Collider)>>,
     mut npc_timer: ResMut<npc::NpcWalkConfig>,
     level_walls: Res<LevelWalls>,
 ) {
@@ -188,21 +208,25 @@ fn cache_wall_locations(
 }
 
 fn npc_interact(
-    players: Query<&GridCoords, (With<player::Player>, Changed<GridCoords>)>,
-    npc: Query<&GridCoords, With<npc::Npc>>,
-    input: Res<Input<KeyCode>>,
+    mut players: Query<&GridCoords, (With<player::Player>, Changed<GridCoords>)>,
+    mut player_event: Query<&mut player::PlayerEvents, With<(player::PlayerEvents)>>,
+    npc: Query<&GridCoords, With<npc::Npc>>
 ){
-    let mut collide: bool = false;
     if players
         .iter()
         .zip(npc.iter())
+        .zip(player_event.iter())
         .any(|(player_grid_coords, npc_grid_coords)| player_grid_coords == npc_grid_coords)
     {
         info!("Npc collision detected...");
-
-        if input.just_pressed(KeyCode::E) {
-            info!("Hello, Ariel!");
-        }
+        let mut touch = player_event.single_mut();
+        info!("interact: {:?}", touch.interact);
+       
+        // if touch.interact {
+        //     info!("<<< NPC interaction >>>");
+        //     info!("interact: {:?}", touch.interact);
+            touch.interact = false;
+        // }
     }
 }
 

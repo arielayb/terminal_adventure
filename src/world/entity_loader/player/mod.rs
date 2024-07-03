@@ -13,3 +13,8 @@ pub struct PlayerBundle {
 // This plugin will contain the game.
 #[derive(Default, Component)]
 pub struct Player;
+
+#[derive(Default, Component, Debug)]
+pub struct PlayerEvents{
+   pub interact: bool,
+}
