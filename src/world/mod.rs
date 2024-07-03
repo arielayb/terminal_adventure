@@ -1,6 +1,5 @@
 use crate::states::*;
 use bevy::prelude::*;
-use bevy_aseprite::{anim::AsepriteAnimation, AsepriteBundle, AsepritePlugin};
 use bevy_ecs_ldtk::prelude::*;
 
 mod entity_loader;

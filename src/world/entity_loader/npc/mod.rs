@@ -13,7 +13,6 @@ pub struct NpcBundle {
     pub sprite_sheet_bundle: SpriteSheetBundle,
     #[grid_coords]
     pub grid_coords: GridCoords,
-    collider: Collider,
 }
 
 #[derive(Resource, Debug)]
@@ -35,6 +34,3 @@ impl Default for NpcWalkConfig {
         Self::new()
     }
 }
-
-#[derive(Component)]
-pub struct Collider;

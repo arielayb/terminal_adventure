@@ -1,7 +1,5 @@
 use crate::states::*;
 use bevy::audio::CpalSample;
-use npc::Npc;
-use player::Player;
 use rand::prelude::*;
 use std::collections::HashSet;
 use std::{thread, time::Duration};
@@ -64,12 +62,6 @@ struct WallBundle {
     wall: Wall,
 }
 
-// #[derive(Default, Component)]
-// struct PlayerEvents{
-//     interact: bool,
-// }
-
-
 fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) 
 {
     // commands
@@ -108,17 +100,17 @@ fn player_control(
     mut input: Res<Input<KeyCode>>,
     level_walls: Res<LevelWalls>,
 ) {
-    if input.pressed(KeyCode::E) {
+    if input.just_pressed(KeyCode::E) {
         info!("e key pressed");
         // interaction with objects
         let mut touch = player_event.single_mut();
         touch.interact = true;
     } 
-    // else if input.just_released(KeyCode::E) {
-    //     let mut touch = player_event.single_mut();
-    //     touch.interact = false;
-    //     info!("interact: {:?}", touch.interact);
-    // }
+    else if input.just_released(KeyCode::E) {
+        let mut touch = player_event.single_mut();
+        touch.interact = false;
+        info!("interact: {:?}", touch.interact);
+    }
 
     let movement_direction = if input.just_pressed(KeyCode::W) {
         GridCoords::new(0, 1)
@@ -142,7 +134,7 @@ fn player_control(
 
 fn move_npc(
     time: Res<Time>,
-    mut npc: Query<&mut GridCoords, With<(npc::Npc, npc::Collider)>>,
+    mut npc: Query<&mut GridCoords, With<npc::Npc>>,
     mut npc_timer: ResMut<npc::NpcWalkConfig>,
     level_walls: Res<LevelWalls>,
 ) {
@@ -208,25 +200,21 @@ fn cache_wall_locations(
 }
 
 fn npc_interact(
-    mut players: Query<&GridCoords, (With<player::Player>, Changed<GridCoords>)>,
+    mut players: Query<&GridCoords, (With<player::Player>)>,
     mut player_event: Query<&mut player::PlayerEvents, With<(player::PlayerEvents)>>,
     npc: Query<&GridCoords, With<npc::Npc>>
 ){
     if players
         .iter()
         .zip(npc.iter())
-        .zip(player_event.iter())
         .any(|(player_grid_coords, npc_grid_coords)| player_grid_coords == npc_grid_coords)
     {
         info!("Npc collision detected...");
         let mut touch = player_event.single_mut();
-        info!("interact: {:?}", touch.interact);
        
-        // if touch.interact {
-        //     info!("<<< NPC interaction >>>");
-        //     info!("interact: {:?}", touch.interact);
-            touch.interact = false;
-        // }
+        if touch.interact {
+            info!("<<< NPC interaction >>>");
+        }
     }
 }
 
