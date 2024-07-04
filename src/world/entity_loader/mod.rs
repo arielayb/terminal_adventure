@@ -95,9 +95,9 @@ fn spawn_npc(mut commands: Commands, asset_server: Res<AssetServer>)
 }
 
 fn player_control(
-    mut players: Query<&mut GridCoords, With<(player::Player)>>,
-    mut player_event: Query<&mut player::PlayerEvents, With<(player::PlayerEvents)>>,
-    mut input: Res<Input<KeyCode>>,
+    mut players: Query<&mut GridCoords, With<player::Player>>,
+    mut player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
+    input: Res<Input<KeyCode>>,
     level_walls: Res<LevelWalls>,
 ) {
     if input.just_pressed(KeyCode::E) {
@@ -105,21 +105,31 @@ fn player_control(
         // interaction with objects
         let mut touch = player_event.single_mut();
         touch.interact = true;
-    } 
-    else if input.just_released(KeyCode::E) {
+    } else if input.just_released(KeyCode::E) {
         let mut touch = player_event.single_mut();
         touch.interact = false;
-        info!("interact: {:?}", touch.interact);
     }
 
-    let movement_direction = if input.just_pressed(KeyCode::W) {
+    let movement_direction = if input.just_pressed(KeyCode::W) 
+    || input.just_pressed(KeyCode::Numpad8) {
         GridCoords::new(0, 1)
-    } else if input.just_pressed(KeyCode::A) {
+    } else if input.just_pressed(KeyCode::A) 
+    || input.just_pressed(KeyCode::Numpad4) {
         GridCoords::new(-1, 0)
-    } else if input.just_pressed(KeyCode::S) {
+    } else if input.just_pressed(KeyCode::S) 
+    || input.just_pressed(KeyCode::Numpad5) {
         GridCoords::new(0, -1)
-    } else if input.just_pressed(KeyCode::D) {
+    } else if input.just_pressed(KeyCode::D) 
+    || input.just_pressed(KeyCode::Numpad6) {
         GridCoords::new(1, 0)
+    } else if input.just_pressed(KeyCode::Numpad9) {
+        GridCoords::new(1, 1)
+    } else if input.just_pressed(KeyCode::Numpad1) {
+        GridCoords::new(-1, -1)
+    } else if input.just_pressed(KeyCode::Numpad7) {
+        GridCoords::new(-1, 1)
+    } else if input.just_pressed(KeyCode::Numpad3) {
+            GridCoords::new(1, -1)
     } else {
         return;
     };
@@ -200,7 +210,7 @@ fn cache_wall_locations(
 }
 
 fn npc_interact(
-    mut players: Query<&GridCoords, (With<player::Player>)>,
+    players: Query<&GridCoords, (With<player::Player>)>,
     mut player_event: Query<&mut player::PlayerEvents, With<(player::PlayerEvents)>>,
     npc: Query<&GridCoords, With<npc::Npc>>
 ){
@@ -210,7 +220,7 @@ fn npc_interact(
         .any(|(player_grid_coords, npc_grid_coords)| player_grid_coords == npc_grid_coords)
     {
         info!("Npc collision detected...");
-        let mut touch = player_event.single_mut();
+        let touch = player_event.single_mut();
        
         if touch.interact {
             info!("<<< NPC interaction >>>");
