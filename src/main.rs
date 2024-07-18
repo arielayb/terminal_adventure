@@ -28,6 +28,7 @@ fn main() {
             FrameTimeDiagnosticsPlugin,
         ))
         .add_state::<states::GameState>()
+        .add_state::<states::PausedState>()
         .add_plugins(main_menu::MainMenu)
         .add_plugins(world::World)
         // .add_plugins(debug::DebugPlugin)

@@ -4,8 +4,15 @@ use bevy::prelude::*;
 pub enum GameState {
     #[default]
     TitleMenu,
-    Playing,
+    Running,
     LoadAssets,
+}
+
+#[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
+pub enum PausedState {
+    #[default]
+    Paused,
+    Unpaused,
 }
 
 // Generic system that takes a component as a parameter, and will despawn all entities with that component

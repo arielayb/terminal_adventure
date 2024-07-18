@@ -13,11 +13,11 @@ pub struct World;
 
 impl Plugin for World {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::Playing), world_setup)
+        app.add_systems(OnEnter(GameState::Running), world_setup)
             .add_plugins(entity_loader::EntityLoader)
             .add_plugins(LdtkPlugin)
             .insert_resource(LevelSelection::index(0))
-            .add_systems(OnExit(GameState::Playing), despawn_screen::<OnGameScreen>);
+            .add_systems(OnExit(GameState::Running), despawn_screen::<OnGameScreen>);
     }
 }
 

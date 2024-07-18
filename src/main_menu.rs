@@ -164,7 +164,7 @@ fn selector(
 
         if opt.top_sel && keys.just_pressed(KeyCode::Return) {
             info!("the enter key was pressed for new game!");
-            game_state.set(GameState::Playing);
+            game_state.set(GameState::Running);
         }
 
         if opt.mid_sel && keys.just_pressed(KeyCode::Return) {

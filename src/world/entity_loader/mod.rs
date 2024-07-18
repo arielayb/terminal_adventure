@@ -6,7 +6,7 @@ use std::{thread, time::Duration};
 use bevy::{prelude::*, utils::hashbrown::Equivalent};
 use bevy_ecs_ldtk::prelude::*;
 use bevy::input::keyboard::KeyboardInput;
-use bevy_aseprite::{anim::AsepriteAnimation, AsepriteBundle, AsepritePlugin};
+use bevy_text_popup::{TextPopupEvent, TextPopupPlugin, TextPopupTimeout, TextPopupButton};
 
 mod player;
 mod npc;
@@ -21,8 +21,10 @@ pub struct EntityLoader;
 
 impl Plugin for EntityLoader {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::Playing), (spawn_player, spawn_npc))
-            .add_plugins(AsepritePlugin)
+        app.configure_sets(Update, ());
+
+        app.add_systems(OnEnter(GameState::Running), (spawn_player, spawn_npc))
+            .add_plugins(TextPopupPlugin)
             .register_ldtk_entity::<npc::NpcBundle>("NPC")
             .register_ldtk_entity::<player::PlayerBundle>("Player")
             .register_ldtk_int_cell_for_layer::<WallBundle>("Walls", 1)
@@ -33,7 +35,7 @@ impl Plugin for EntityLoader {
                                                     translate_grid_coords_entities, 
                                                     cache_wall_locations, 
                                                     npc_interact))
-            .add_systems(OnExit(GameState::Playing), despawn_screen::<OnGameScreen>);
+            .add_systems(OnExit(GameState::Running), despawn_screen::<OnGameScreen>);
     }
 }
 
@@ -210,7 +212,9 @@ fn cache_wall_locations(
 }
 
 fn npc_interact(
+    time: Res<Time>,
     players: Query<&GridCoords, (With<player::Player>)>,
+    mut text_popup_events: EventWriter<TextPopupEvent>,
     mut player_event: Query<&mut player::PlayerEvents, With<(player::PlayerEvents)>>,
     npc: Query<&GridCoords, With<npc::Npc>>
 ){
@@ -224,6 +228,16 @@ fn npc_interact(
        
         if touch.interact {
             info!("<<< NPC interaction >>>");
+            text_popup_events.send(TextPopupEvent {
+                content: "Modal Example".to_string(),
+                modal: Some(Color::BLACK.with_a(0.75)),
+                timeout: TextPopupTimeout::Seconds(10),
+                dismiss_button: Some(TextPopupButton {
+                    text: "Close".to_string(),
+                    ..Default::default()
+                }),
+                ..default()
+            });
         }
     }
 }
