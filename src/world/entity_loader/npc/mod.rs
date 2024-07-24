@@ -10,7 +10,7 @@ pub struct Npc;
 pub struct NpcBundle {
     pub npc: Npc,
     #[sprite_sheet_bundle]
-    pub sprite_sheet_bundle: SpriteSheetBundle,
+    pub sprite_sheet_bundle: LdtkSpriteSheetBundle,
     #[grid_coords]
     pub grid_coords: GridCoords,
 }

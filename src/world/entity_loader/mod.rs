@@ -6,7 +6,7 @@ use std::{thread, time::Duration};
 use bevy::{prelude::*, utils::hashbrown::Equivalent};
 use bevy_ecs_ldtk::prelude::*;
 use bevy::input::keyboard::KeyboardInput;
-use bevy_text_popup::{TextPopupEvent, TextPopupPlugin, TextPopupTimeout, TextPopupButton};
+use bevy_text_mode::{TextModePlugin, TextModeSprite, TextModeSpriteBundle};
 
 mod player;
 mod npc;
@@ -21,10 +21,10 @@ pub struct EntityLoader;
 
 impl Plugin for EntityLoader {
     fn build(&self, app: &mut App) {
-        app.configure_sets(Update, ());
+        // app.configure_sets(Update, ());
 
         app.add_systems(OnEnter(GameState::Running), (spawn_player, spawn_npc))
-            .add_plugins(TextPopupPlugin)
+            .add_plugins(TextModePlugin)
             .register_ldtk_entity::<npc::NpcBundle>("NPC")
             .register_ldtk_entity::<player::PlayerBundle>("Player")
             .register_ldtk_int_cell_for_layer::<WallBundle>("Walls", 1)
@@ -99,29 +99,29 @@ fn spawn_npc(mut commands: Commands, asset_server: Res<AssetServer>)
 fn player_control(
     mut players: Query<&mut GridCoords, With<player::Player>>,
     mut player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
-    input: Res<Input<KeyCode>>,
+    input: Res<ButtonInput<KeyCode>>,
     level_walls: Res<LevelWalls>,
 ) {
-    if input.just_pressed(KeyCode::E) {
+    if input.just_pressed(KeyCode::KeyE) {
         info!("e key pressed");
         // interaction with objects
         let mut touch = player_event.single_mut();
         touch.interact = true;
-    } else if input.just_released(KeyCode::E) {
+    } else if input.just_released(KeyCode::KeyE) {
         let mut touch = player_event.single_mut();
         touch.interact = false;
     }
 
-    let movement_direction = if input.just_pressed(KeyCode::W) 
+    let movement_direction = if input.just_pressed(KeyCode::KeyW) 
     || input.just_pressed(KeyCode::Numpad8) {
         GridCoords::new(0, 1)
-    } else if input.just_pressed(KeyCode::A) 
+    } else if input.just_pressed(KeyCode::KeyA) 
     || input.just_pressed(KeyCode::Numpad4) {
         GridCoords::new(-1, 0)
-    } else if input.just_pressed(KeyCode::S) 
+    } else if input.just_pressed(KeyCode::KeyS) 
     || input.just_pressed(KeyCode::Numpad5) {
         GridCoords::new(0, -1)
-    } else if input.just_pressed(KeyCode::D) 
+    } else if input.just_pressed(KeyCode::KeyD) 
     || input.just_pressed(KeyCode::Numpad6) {
         GridCoords::new(1, 0)
     } else if input.just_pressed(KeyCode::Numpad9) {
@@ -214,7 +214,6 @@ fn cache_wall_locations(
 fn npc_interact(
     time: Res<Time>,
     players: Query<&GridCoords, (With<player::Player>)>,
-    mut text_popup_events: EventWriter<TextPopupEvent>,
     mut player_event: Query<&mut player::PlayerEvents, With<(player::PlayerEvents)>>,
     npc: Query<&GridCoords, With<npc::Npc>>
 ){
@@ -228,16 +227,7 @@ fn npc_interact(
        
         if touch.interact {
             info!("<<< NPC interaction >>>");
-            text_popup_events.send(TextPopupEvent {
-                content: "Modal Example".to_string(),
-                modal: Some(Color::BLACK.with_a(0.75)),
-                timeout: TextPopupTimeout::Seconds(10),
-                dismiss_button: Some(TextPopupButton {
-                    text: "Close".to_string(),
-                    ..Default::default()
-                }),
-                ..default()
-            });
+           
         }
     }
 }

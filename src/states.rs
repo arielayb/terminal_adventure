@@ -8,7 +8,9 @@ pub enum GameState {
     LoadAssets,
 }
 
-#[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
+// #[derive(SubStates, Default, Debug, Clone, PartialEq, Eq, Hash)]
+// #[source(GameState = GameState::Running)
+#[derive(Debug, Default, States, Clone, Eq, PartialEq, Hash)]
 pub enum PausedState {
     #[default]
     Paused,

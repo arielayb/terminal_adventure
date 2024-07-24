@@ -19,12 +19,10 @@ opt-level = 3
 # NOTE: Remember to revert this before releasing your game! 
 # Otherwise you will need to include libbevy_dylib alongside your game if you want it to run. 
 # If you remove the "dynamic" feature, your game executable can run standalone.
-bevy = { version = "0.12", features = ["dynamic_linking"] }
+bevy = { version = "0.14", features = ["dynamic_linking"] }
 bevy_aseprite = "0.12.0"
-bevy_ecs_ldtk = "0.9.0"
-bevy_text_mode = "0.2.0"
-bevy_text_popup = "0.2"
-# bevy_ecs_ldtk = { git = "https://github.com/MScottMcBee/bevy_ecs_ldtk", branch = "0.14" }
+bevy_ecs_ldtk = "0.10"
+bevy_text_mode = "0.4.0"
 dialogue_factory = { path = "dialogue_factory" } # from a path in the local filesystem
 entity_factory = { path = "entity_factory" } # from a path in the local filesystem
 rand = "0.8.5"

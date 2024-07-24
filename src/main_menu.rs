@@ -111,7 +111,7 @@ fn title_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 fn selector(
-    keys: Res<Input<KeyCode>>,
+    keys: Res<ButtonInput<KeyCode>>,
     mut game_state: ResMut<NextState<GameState>>,
     mut sprite_position: Query<(&mut Options, &mut Selection, &mut Transform)>,
 ) {
@@ -140,12 +140,12 @@ fn selector(
             }
         }
 
-        if (keys.just_pressed(KeyCode::W) || keys.just_pressed(KeyCode::Up)) && !opt.top_sel {
+        if (keys.just_pressed(KeyCode::KeyW) || keys.just_pressed(KeyCode::ArrowUp)) && !opt.top_sel {
             *logo = Selection::Top;
             opt.top_sel = true;
             opt.mid_sel = false;
             opt.bot_sel = false;
-        } else if (keys.just_pressed(KeyCode::S) || keys.just_pressed(KeyCode::Down))
+        } else if (keys.just_pressed(KeyCode::KeyS) || keys.just_pressed(KeyCode::ArrowDown))
             && !opt.mid_sel
             && !opt.bot_sel
         {
@@ -153,7 +153,7 @@ fn selector(
             opt.mid_sel = true;
             opt.top_sel = false;
             opt.bot_sel = false;
-        } else if (keys.just_pressed(KeyCode::S) || keys.just_pressed(KeyCode::Down))
+        } else if (keys.just_pressed(KeyCode::KeyS) || keys.just_pressed(KeyCode::ArrowDown))
             && !opt.bot_sel
         {
             *logo = Selection::Bottom;
@@ -162,16 +162,16 @@ fn selector(
             opt.top_sel = false;
         }
 
-        if opt.top_sel && keys.just_pressed(KeyCode::Return) {
+        if opt.top_sel && keys.just_pressed(KeyCode::Enter) {
             info!("the enter key was pressed for new game!");
             game_state.set(GameState::Running);
         }
 
-        if opt.mid_sel && keys.just_pressed(KeyCode::Return) {
+        if opt.mid_sel && keys.just_pressed(KeyCode::Enter) {
             info!("the enter key was pressed for load game!");
         }
 
-        if opt.bot_sel && keys.just_pressed(KeyCode::Return) {
+        if opt.bot_sel && keys.just_pressed(KeyCode::Enter) {
             info!("the enter key was pressed for exit game!");
             process::exit(1);
         }
