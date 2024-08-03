@@ -1,12 +1,11 @@
 use crate::states::*;
 use bevy::audio::CpalSample;
+use bevy_text_popup::{TextPopupEvent, TextPopupPlugin, TextPopupTimeout};
+use bevy_ecs_ldtk::prelude::*;
+use bevy::input::keyboard::KeyboardInput;
 use rand::prelude::*;
 use std::collections::HashSet;
 use std::{thread, time::Duration};
-use bevy::{prelude::*, utils::hashbrown::Equivalent};
-use bevy_ecs_ldtk::prelude::*;
-use bevy::input::keyboard::KeyboardInput;
-use bevy_text_mode::{TextModePlugin, TextModeSprite, TextModeSpriteBundle};
 
 mod player;
 mod npc;
@@ -24,7 +23,6 @@ impl Plugin for EntityLoader {
         // app.configure_sets(Update, ());
 
         app.add_systems(OnEnter(GameState::Running), (spawn_player, spawn_npc))
-            .add_plugins(TextModePlugin)
             .register_ldtk_entity::<npc::NpcBundle>("NPC")
             .register_ldtk_entity::<player::PlayerBundle>("Player")
             .register_ldtk_int_cell_for_layer::<WallBundle>("Walls", 1)
@@ -213,6 +211,8 @@ fn cache_wall_locations(
 
 fn npc_interact(
     time: Res<Time>,
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
     players: Query<&GridCoords, (With<player::Player>)>,
     mut player_event: Query<&mut player::PlayerEvents, With<(player::PlayerEvents)>>,
     npc: Query<&GridCoords, With<npc::Npc>>
@@ -224,9 +224,10 @@ fn npc_interact(
     {
         info!("Npc collision detected...");
         let touch = player_event.single_mut();
-       
+
         if touch.interact {
             info!("<<< NPC interaction >>>");
+
            
         }
     }

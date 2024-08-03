@@ -2,6 +2,7 @@
  * An Abstract factory class for entities/player
  */
 use bevy::prelude::*;
+use bevy_text_popup::{TextPopupEvent, TextPopupPlugin, TextPopupTimeout};
 
 pub trait AbstractPlayerEntity {
     fn player_entity(&self, name: String, hp: i32, tp: i32) -> PlayerEntity;
