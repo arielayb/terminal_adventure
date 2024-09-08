@@ -1,14 +1,17 @@
 use crate::states::*;
+use bevy::prelude::*;
+use bevy::text::JustifyText;
 use bevy::audio::CpalSample;
-use bevy_text_popup::{TextPopupEvent, TextPopupPlugin, TextPopupTimeout};
+use bevy_text_popup::{TextPopupEvent, TextPopupPlugin, TextPopupButton, TextPopupTimeout, TextPopupLocation};
 use bevy_ecs_ldtk::prelude::*;
-use bevy::input::keyboard::KeyboardInput;
 use rand::prelude::*;
 use std::collections::HashSet;
 use std::{thread, time::Duration};
+use name_maker::RandomNameGenerator;
+use name_maker::Gender;
 
-mod player;
 mod npc;
+mod player;
 
 // Tag component used to tag entities added on the game screen
 #[derive(Component)]
@@ -28,6 +31,7 @@ impl Plugin for EntityLoader {
             .register_ldtk_int_cell_for_layer::<WallBundle>("Walls", 1)
             .init_resource::<LevelWalls>()
             .init_resource::<npc::NpcWalkConfig>()
+            .add_plugins(TextPopupPlugin)
             .add_systems(Update, (player_control, 
                                                     move_npc, 
                                                     translate_grid_coords_entities, 
@@ -62,35 +66,44 @@ struct WallBundle {
     wall: Wall,
 }
 
-fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) 
+fn spawn_player(mut commands: Commands) 
 {
-    // commands
-    //     .spawn(AsepriteBundle {
-    //         aseprite: asset_server.load("workers/workers1.aseprite"),
-    //         animation: AsepriteAnimation::from("player_down_idle"),
-    //         transform: Transform {
-    //             scale: Vec3::splat(1.),
-    //             translation: Vec3::new(0., 80., 0.),
-    //             ..Default::default()
-    //         },
-    //         ..Default::default()
-    //     })
-    //     .insert(PlayerTag);
+    // TODO: work on removing factory design pattern in next goal
+    let temp_name = String::from("ariel");
+    let temp_hp: u32 = 10;
+    // let temp_tp: u32 = 5;
 
     commands.spawn(
-        player::PlayerBundle{
-            player: player::Player,
+        (player::PlayerBundle {
+            player_entity: player::Player,
             ..Default::default()
-        }).insert(player::PlayerEvents{interact: false});
+        },player::PlayerName{
+            player_name: temp_name 
+        },player::PlayerHealth{
+            player_hp: temp_hp
+        })
+    ).insert(player::PlayerEvents{interact: false});
 }
 
 fn spawn_npc(mut commands: Commands, asset_server: Res<AssetServer>) 
 {
+    // TODO: work on design patterns for random NPC generator in next goal
+    // get a range for the name
+    //let rng = RNG::try_from(&Language::Fantasy).unwrap();
+    let rng = RandomNameGenerator::init();
+
+    // Prints a random name with a masculine first name.
+    let first_name: String = rng.generate_specific(Gender::Male).first_name;
+
+    // let temp_hp: u32 = 10;
+  
     commands.spawn(
-        npc::NpcBundle{
+        (npc::NpcBundle{
             npc: npc::Npc,
             ..Default::default()
-        }
+        },npc::NpcName{
+            npc_name: first_name
+        })
     );
 }
 
@@ -210,25 +223,37 @@ fn cache_wall_locations(
 }
 
 fn npc_interact(
-    time: Res<Time>,
-    mut commands: Commands,
     asset_server: Res<AssetServer>,
-    players: Query<&GridCoords, (With<player::Player>)>,
-    mut player_event: Query<&mut player::PlayerEvents, With<(player::PlayerEvents)>>,
-    npc: Query<&GridCoords, With<npc::Npc>>
+    players: Query<&GridCoords, With<player::Player>>,
+    mut text_popup_events: EventWriter<TextPopupEvent>,
+    mut player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
+    npc_coords: Query<&GridCoords, With<npc::Npc>>,
+    mut npc_name: Query<&npc::NpcName, With<npc::NpcName>>,
+
 ){
     if players
         .iter()
-        .zip(npc.iter())
+        .zip(npc_coords.iter())
         .any(|(player_grid_coords, npc_grid_coords)| player_grid_coords == npc_grid_coords)
     {
         info!("Npc collision detected...");
         let touch = player_event.single_mut();
+        // let fuck_name = npc_name.single_mut();
 
         if touch.interact {
             info!("<<< NPC interaction >>>");
-
-           
+            // println!("{}", npc.single_mut().1.clone().get_npc_name());
+            text_popup_events.send(TextPopupEvent {
+                content: format!("{:?}", npc_name.single_mut().npc_name.to_string()),
+                font: Some(asset_server.load("fonts/Fortine-Regular.otf")),
+                font_size: 25.,
+                location: TextPopupLocation::Bottom,
+                text_alignment: JustifyText::Left,
+                border_color: Color::linear_rgb(100., 100., 100.),
+                modal: Some(Color::linear_rgba(0., 0., 0., 0.)),
+                timeout: TextPopupTimeout::Seconds(5),
+                ..default()
+            });
         }
     }
 }

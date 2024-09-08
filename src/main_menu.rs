@@ -1,13 +1,10 @@
 use crate::states::*;
 use bevy::{
     core_pipeline::{
-        bloom::{BloomCompositeMode, BloomSettings},
+        bloom::BloomSettings,
         tonemapping::Tonemapping,
     },
-    ecs::event::Events,
-    input::InputSystem,
     prelude::*,
-    sprite::MaterialMesh2dBundle,
 };
 use std::process;
 
@@ -38,9 +35,8 @@ struct Options {
 struct OnMenuScreen;
 
 fn title_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let font = asset_server.load("fonts/alphacorsa.personal-use.ttf");
     let text_style = TextStyle {
-        font: font.clone(),
+        font: asset_server.load("fonts/alphacorsa.personal-use.ttf"),
         font_size: 60.0,
         color: Color::WHITE,
     };

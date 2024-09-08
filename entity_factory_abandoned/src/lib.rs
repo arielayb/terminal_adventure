@@ -2,18 +2,17 @@
  * An Abstract factory class for entities/player
  */
 use bevy::prelude::*;
-use bevy_text_popup::{TextPopupEvent, TextPopupPlugin, TextPopupTimeout};
 
 pub trait AbstractPlayerEntity {
-    fn player_entity(&self, name: String, hp: i32, tp: i32) -> PlayerEntity;
+    fn player_entity(&self, name: String, hp: u32, tp: u32) -> PlayerEntity;
 }
 
 pub trait AbstractNpcEntity {
-    fn npc_entity(&self, name: String, hp: i32) -> NpcEntity;
+    fn npc_entity(&self, name: String, hp: u32) -> NpcEntity;
 }
 
 pub trait AbstractEnemyEntity {
-    fn enemy_entity(&self, name: String, hp: i32, tp: i32) -> EnemyEntity;
+    fn enemy_entity(&self, name: String, hp: u32, tp: u32) -> EnemyEntity;
 }
 
 // Dynamic abstract factory using Box pointer
@@ -39,15 +38,15 @@ impl AbstractEntityFactory for EntityFactory {
     }
 }
 
-#[derive(Component, Clone, Debug)]
+#[derive(Default, Component, Debug)]
 pub struct PlayerEntity {
     pub name: String,
-    pub health: i32,
-    pub tech: i32,
+    pub health: u32,
+    pub tech: u32,
 }
 
 impl AbstractPlayerEntity for PlayerEntity{
-    fn player_entity(&self, player_name: String, hp: i32, tp: i32) -> PlayerEntity {
+    fn player_entity(&self, player_name: String, hp: u32, tp: u32) -> PlayerEntity {
         let player_entity = PlayerEntity{
             name: player_name,
             health: hp,
@@ -58,14 +57,14 @@ impl AbstractPlayerEntity for PlayerEntity{
     }
 }
 
-#[derive(Component, Clone, Debug)]
+#[derive(Default, Component, Clone, Debug)]
 pub struct NpcEntity {
     pub name: String,
-    pub health: i32,
+    pub health: u32
 }
 
 impl AbstractNpcEntity for NpcEntity{
-    fn npc_entity(&self, npc_name: String, hp: i32) -> NpcEntity {
+    fn npc_entity(&self, npc_name: String, hp: u32) -> NpcEntity {
         let npc_entity = NpcEntity{
             name: npc_name,
             health: hp,
@@ -78,12 +77,12 @@ impl AbstractNpcEntity for NpcEntity{
 #[derive(Component, Clone, Debug)]
 pub struct EnemyEntity {
     pub name: String,
-    pub health: i32,
-    pub tech: i32,
+    pub health: u32,
+    pub tech: u32,
 }
 
 impl AbstractEnemyEntity for EnemyEntity{
-    fn enemy_entity(&self, enemy_name: String, hp: i32, tp: i32) -> EnemyEntity{
+    fn enemy_entity(&self, enemy_name: String, hp: u32, tp: u32) -> EnemyEntity{
         let enemy_entity = EnemyEntity{
             name: enemy_name,
             health: hp,
