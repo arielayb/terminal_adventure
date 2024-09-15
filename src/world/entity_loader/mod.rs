@@ -252,9 +252,9 @@ fn npc_interact(
             info!("<<< NPC interaction >>>");
             // println!("{}", npc.single_mut().1.clone().get_npc_name());
             text_popup_events.send(TextPopupEvent {
-                content: format!("{}:\n{}", npc_name.single_mut().npc_name.to_string(), npc_dialogue.single_mut().dialogue),
+                content: format!("{} : \n{}", npc_name.single_mut().npc_name.to_string(), npc_dialogue.single_mut().dialogue),
                 font: Some(asset_server.load("fonts/Fortine-Regular.otf")),
-                font_size: 15.,
+                font_size: 20.,
                 location: TextPopupLocation::Bottom,
                 text_alignment: JustifyText::Left,
                 border_color: Color::linear_rgb(100., 100., 100.),
