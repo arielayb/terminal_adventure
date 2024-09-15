@@ -6,6 +6,7 @@ use bevy_text_popup::{TextPopupEvent, TextPopupPlugin, TextPopupButton, TextPopu
 use bevy_ecs_ldtk::prelude::*;
 use rand::prelude::*;
 use std::collections::HashSet;
+use std::ops::Index;
 use std::{thread, time::Duration};
 use name_maker::RandomNameGenerator;
 use name_maker::Gender;
@@ -85,7 +86,7 @@ fn spawn_player(mut commands: Commands)
     ).insert(player::PlayerEvents{interact: false});
 }
 
-fn spawn_npc(mut commands: Commands, asset_server: Res<AssetServer>) 
+fn spawn_npc(mut commands: Commands) 
 {
     // TODO: work on design patterns for random NPC generator in next goal
     // get a range for the name
@@ -96,13 +97,18 @@ fn spawn_npc(mut commands: Commands, asset_server: Res<AssetServer>)
     let first_name: String = rng.generate_specific(Gender::Male).first_name;
 
     // let temp_hp: u32 = 10;
-  
+    let arr_dialogue: [&str; 5] = ["Hi...", "Hello..", "Yes?", "Go away.", "What do you want?"];
+    let mut rng = thread_rng();
+    let i: usize  = rng.gen_range(1..=5);
+
     commands.spawn(
         (npc::NpcBundle{
             npc: npc::Npc,
             ..Default::default()
         },npc::NpcName{
             npc_name: first_name
+        }, npc::NpcDialogue{
+            dialogue: arr_dialogue[i].to_string()
         })
     );
 }
@@ -229,6 +235,7 @@ fn npc_interact(
     mut player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
     npc_coords: Query<&GridCoords, With<npc::Npc>>,
     mut npc_name: Query<&npc::NpcName, With<npc::NpcName>>,
+    mut npc_dialogue: Query<&npc::NpcDialogue, With<npc::NpcDialogue>>
 
 ){
     if players
@@ -237,14 +244,15 @@ fn npc_interact(
         .any(|(player_grid_coords, npc_grid_coords)| player_grid_coords == npc_grid_coords)
     {
         info!("Npc collision detected...");
+        let mut rng = thread_rng();
         let touch = player_event.single_mut();
-        // let fuck_name = npc_name.single_mut();
+        let n: usize = rng.gen_range(0..=4);
 
         if touch.interact {
             info!("<<< NPC interaction >>>");
             // println!("{}", npc.single_mut().1.clone().get_npc_name());
             text_popup_events.send(TextPopupEvent {
-                content: format!("{:?}:\ngreetings!", npc_name.single_mut().npc_name.to_string()),
+                content: format!("{}:\n{}", npc_name.single_mut().npc_name.to_string(), npc_dialogue.single_mut().dialogue),
                 font: Some(asset_server.load("fonts/Fortine-Regular.otf")),
                 font_size: 15.,
                 location: TextPopupLocation::Bottom,
@@ -261,35 +269,19 @@ fn npc_interact(
 // Tests for the abstract factory dialogue class
 #[cfg(test)]
 mod test{
-    use entity_factory::*;
+    use dialogue_factory::*;
 
     #[test]
     fn test_init_player_entity_factory(){
-        let entity_fact = EntityFactory {};
-        let player_factory = AbstractEntityFactory::create_player_entity(&entity_fact, String::from("ariel")); 
+        let dialogue_fact = DialogueFactory {};
+        let dialogue_npc_factory = AbstractDialogueFactory::create_name_text_dialogue(&dialogue_fact); 
         
-        let player = player_factory.player_entity(String::from("ariel"), 10, 5);
-        let player_ent = PlayerEntity{name: String::from("ariel"), health: 10, tech: 5};
+        let npc_name = dialogue_npc_factory.name_dialogue(String::from("Bobby"));
+        let name = String::from("Bobby");
 
-        assert_eq!(&player.name, &player_ent.name);
-        assert_eq!(&player.health, &player_ent.health);
-        assert_eq!(&player.tech, &player_ent.tech);
+        assert_eq!(&npc_name, &name);
     }
 
-    #[test]
-    fn test_init_npc_entity_factory(){
-        let entity_fact = EntityFactory {};
-        let npc_factory = AbstractEntityFactory::create_npc_entity(&entity_fact, String::from("Bob")); 
-        
-        let npc = npc_factory.npc_entity(String::from("Bob"), 10);
-        // let npc = npc_factory.npc_entity(String::from("npc1"));
-        // let enemey = enemy_factory.enemy_entity(String::from("enemy1"));
-
-        let npc_ent = NpcEntity{name: String::from("Bob"), health: 10};
-
-        assert_eq!(&npc.name, &npc_ent.name);
-        assert_eq!(&npc.health, &npc_ent.health);
-    }
     // #[test]
     // fn test_init_npc_entity_factory(){
     //     let entity_fact = EntityFactory {};
@@ -306,16 +298,30 @@ mod test{
     // }
 
     // #[test]
-    // fn test_init_enemy_entity_factory(){
+    // fn test_init_player_entity_factory(){
     //     let entity_fact = EntityFactory {};
-    //     let enemy_factory = AbstractEntityFactory::create_enemy_entity(&entity_fact, String::from("bandit"));
+    //     let player_factory = AbstractEntityFactory::create_player_entity(&entity_fact, String::from("ariel")); 
         
-    //     let enemy = enemy_factory.enemy_entity(String::from("bandit"), 10, 5);
+    //     let player = player_factory.player_entity(String::from("ariel"), 10, 5);
+    //     let player_ent = PlayerEntity{name: String::from("ariel"), health: 10, tech: 5};
 
-    //     let enemy_ent = EnemyEntity{name: String::from("bandit"), health: 10, tech: 5};
+    //     assert_eq!(&player.name, &player_ent.name);
+    //     assert_eq!(&player.health, &player_ent.health);
+    //     assert_eq!(&player.tech, &player_ent.tech);
+    // }
 
-    //     assert_eq!(&enemy.name, &enemy_ent.name);
-    //     assert_eq!(&enemy.health, &enemy_ent.health);
-    //     assert_eq!(&enemy.tech, &enemy_ent.tech);
+    // #[test]
+    // fn test_init_npc_entity_factory(){
+    //     let entity_fact = EntityFactory {};
+    //     let npc_factory = AbstractEntityFactory::create_npc_entity(&entity_fact, String::from("Bob")); 
+        
+    //     let npc = npc_factory.npc_entity(String::from("Bob"), 10);
+    //     // let npc = npc_factory.npc_entity(String::from("npc1"));
+    //     // let enemey = enemy_factory.enemy_entity(String::from("enemy1"));
+
+    //     let npc_ent = NpcEntity{name: String::from("Bob"), health: 10};
+
+    //     assert_eq!(&npc.name, &npc_ent.name);
+    //     assert_eq!(&npc.health, &npc_ent.health);
     // }
 }

@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
+use std::vec::Vec;
 
 // This plugin will contain the NPC or events.
 #[derive(Default, Component, Clone)]
@@ -13,6 +14,11 @@ pub struct NpcName{
 #[derive(Default, Component, Clone, Debug)]
 pub struct NpcHealth{
     pub npc_hp: u32
+}
+
+#[derive(Default, Component, Clone, Debug)]
+pub struct NpcDialogue{
+    pub dialogue: String 
 }
 
 #[derive(Default, Bundle, LdtkEntity)]
