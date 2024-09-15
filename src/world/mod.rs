@@ -1,18 +1,8 @@
 use crate::states::*;
 use bevy::prelude::*;
-use bevy_aseprite::{anim::AsepriteAnimation, AsepriteBundle, AsepritePlugin};
 use bevy_ecs_ldtk::prelude::*;
-mod player;
-mod abstract_world_builder;
-mod farm;
 
-// #[derive(Default, Bundle, LdtkEntity)]
-// struct PlayerBundle {
-//     #[sprite_sheet_bundle]
-//     sprite_sheet_bundle: SpriteSheetBundle,
-//     #[grid_coords]
-//     grid_coords: GridCoords,
-// }
+mod entity_loader;
 
 // Tag component used to tag entities added on the game screen
 #[derive(Component)]
@@ -23,26 +13,17 @@ pub struct World;
 
 impl Plugin for World {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::Playing), world_setup)
-            .add_plugins(player::Player)
+        app.add_systems(OnEnter(GameState::Running), world_setup)
+            .add_plugins(entity_loader::EntityLoader)
             .add_plugins(LdtkPlugin)
-            // .register_ldtk_entity::<PlayerBundle>("Player")
             .insert_resource(LevelSelection::index(0))
-            .add_systems(OnExit(GameState::Playing), despawn_screen::<OnGameScreen>);
+            .add_systems(OnExit(GameState::Running), despawn_screen::<OnGameScreen>);
     }
 }
-
-fn world_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    //commands.spawn(Camera2dBundle::default());
-    
-    let mut camera = Camera2dBundle::default();
-    camera.projection.scale = 0.5;
-    camera.transform.translation.x += 1280.0 / 4.0;
     camera.transform.translation.y += 720.0 / 4.0;
     commands.spawn(camera);
 
     commands.spawn(LdtkWorldBundle {
         ldtk_handle: asset_server.load("terminal_world.ldtk"),
-        ..Default::default()
     });
 }
