@@ -14,6 +14,9 @@ use name_maker::Gender;
 mod npc;
 mod player;
 
+/// Camera lerp factor.
+const CAM_LERP_FACTOR: f32 = 2.;
+
 // Tag component used to tag entities added on the game screen
 #[derive(Component)]
 struct OnGameScreen;
@@ -26,7 +29,7 @@ impl Plugin for EntityLoader {
     fn build(&self, app: &mut App) {
         // app.configure_sets(Update, ());
 
-        app.add_systems(OnEnter(GameState::Running), (spawn_player, spawn_npc))
+        app.add_systems(OnEnter(GameState::Running), (camera_setup, spawn_player, spawn_npc))
             .register_ldtk_entity::<npc::NpcBundle>("NPC")
             .register_ldtk_entity::<player::PlayerBundle>("Player")
             .register_ldtk_int_cell_for_layer::<WallBundle>("Walls", 1)
@@ -37,10 +40,25 @@ impl Plugin for EntityLoader {
                                                     move_npc, 
                                                     translate_grid_coords_entities, 
                                                     cache_wall_locations, 
-                                                    npc_interact))
+                                                    npc_interact,
+                                                    update_camera))
             .add_systems(OnExit(GameState::Running), despawn_screen::<OnGameScreen>);
     }
 }
+
+// setup the world and camera
+fn camera_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    //commands.spawn(Camera2dBundle::default());
+    
+    let mut camera = Camera2dBundle::default();
+    camera.projection.scale = 0.5;
+    camera.transform.translation.x += 1280.0 / 4.0;
+    camera.transform.translation.y += 720.0 / 4.0;
+    camera.camera.hdr = true;
+
+    commands.spawn(camera);
+}
+
 
 #[derive(Default, Resource)]
 struct LevelWalls {
@@ -99,7 +117,7 @@ fn spawn_npc(mut commands: Commands)
     // let temp_hp: u32 = 10;
     let arr_dialogue: [&str; 5] = ["Hi...", "Hello..", "Yes?", "Go away.", "What do you want?"];
     let mut rng = thread_rng();
-    let i: usize  = rng.gen_range(1..=5);
+    let i: usize  = rng.gen_range(0..=4);
 
     commands.spawn(
         (npc::NpcBundle{
@@ -264,6 +282,56 @@ fn npc_interact(
             });
         }
     }
+}
+
+/// Update the camera position by tracking the player.
+fn update_camera(
+    mut camera: Query<&mut GridCoords, (With<Camera2d>, Without<player::Player>)>,
+    mut player: Query<&mut GridCoords, (With<player::Player>, Without<Camera2d>)>,
+    time: Res<Time>
+    // level_walls: Res<LevelWalls>
+) {
+    let Ok(mut camera) = camera.get_single_mut() else {
+        return;
+    };
+
+    let Ok(player) = player.get_single() else {
+        return;
+    };
+
+    let player_x: i32 = player.x;
+    let player_y: i32 = player.y;
+
+    // let player_transform = Vec3{x: player_x, y: player_y, z: 0.};
+
+    // let Vec3 { x, y, .. } = player_transform;
+    // let direction: Vec3 = Vec3::new(x, y, camera.translation.z);
+
+    // Applies a smooth effect to camera movement using interpolation between
+    // the camera position and the player position on the x and y axes.
+    // Here we use the in-game time, to get the elapsed time (in seconds)
+    // since the previous update. This avoids jittery movement when tracking
+    // the player.
+    // camera.translation = camera
+    //     .translation
+    //     .lerp(direction, time.delta_seconds() * CAM_LERP_FACTOR);
+    
+    let camera_x = player_x;
+    let camera_y = player_y;
+    // let destination = *npc_grid_coords + movement_direction;
+    let movement_direction = GridCoords::new(camera_x, camera_y);
+    let destination = *camera + movement_direction;
+    *camera = destination;
+    // let camera_direction: GridCoords = GridCoords::new(camera.x, camera.y);
+    //for mut camera_grid_coords in camera.iter_mut() {
+        // if npc_timer.walk_timer.finished() {
+            // let destination = camera_grid_coords + movement_direction;
+            //if !level_walls.in_wall(&destination) {
+            //    camera_grid_coords = destination;
+            //}
+        // }
+    //}
+
 }
 
 // Tests for the abstract factory dialogue class
