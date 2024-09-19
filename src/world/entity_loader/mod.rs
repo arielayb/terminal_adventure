@@ -1,5 +1,6 @@
 use crate::states::*;
-use bevy::prelude::*;
+// use bevy::prelude::*;
+use bevy::{prelude::*, render::camera::ScalingMode};
 use bevy::text::JustifyText;
 use bevy::audio::CpalSample;
 use bevy_text_popup::{TextPopupEvent, TextPopupPlugin, TextPopupButton, TextPopupTimeout, TextPopupLocation};
@@ -51,9 +52,11 @@ fn camera_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     //commands.spawn(Camera2dBundle::default());
     
     let mut camera = Camera2dBundle::default();
-    camera.projection.scale = 0.5;
-    camera.transform.translation.x += 1280.0 / 4.0;
-    camera.transform.translation.y += 720.0 / 4.0;
+    camera.projection.scale = 0.3;
+    // camera.transform.scale.x = 1.5;
+    // camera.transform.scale.y = 1.5;
+    camera.transform.translation.x += 638.0/4.;
+    camera.transform.translation.y += 368.0/4.;
     camera.camera.hdr = true;
 
     commands.spawn(camera);
@@ -286,52 +289,39 @@ fn npc_interact(
 
 /// Update the camera position by tracking the player.
 fn update_camera(
-    mut camera: Query<&mut GridCoords, (With<Camera2d>, Without<player::Player>)>,
-    mut player: Query<&mut GridCoords, (With<player::Player>, Without<Camera2d>)>,
-    time: Res<Time>
-    // level_walls: Res<LevelWalls>
+    mut camera: Query<&mut Transform, (With<Camera2d>, Without<player::Player>)>,
+    player: Query<&mut GridCoords, With<player::Player>>
 ) {
-    let Ok(mut camera) = camera.get_single_mut() else {
-        return;
-    };
+    // let Ok(mut camera) = camera.get_single_mut() else {
+    //     return;
+    // };
 
-    let Ok(player) = player.get_single() else {
-        return;
-    };
+    // let Ok(player) = player.get_single() else {
+    //     return;
+    // };
 
-    let player_x: i32 = player.x;
-    let player_y: i32 = player.y;
+    // let pos = player.translation;
+    // let pos_x = player.x;
+    // let pos_y = player.y;
 
-    // let player_transform = Vec3{x: player_x, y: player_y, z: 0.};
+    // for mut transform in &mut camera.iter_mut() {
+        // camera.x = pos_x;
+        // camera.y = pos_y;
+    // }
 
-    // let Vec3 { x, y, .. } = player_transform;
-    // let direction: Vec3 = Vec3::new(x, y, camera.translation.z);
+    for player_transform in &player {
+        let pos_x = player_transform.x;
+        let pos_y = player_transform.y;
 
-    // Applies a smooth effect to camera movement using interpolation between
-    // the camera position and the player position on the x and y axes.
-    // Here we use the in-game time, to get the elapsed time (in seconds)
-    // since the previous update. This avoids jittery movement when tracking
-    // the player.
-    // camera.translation = camera
-    //     .translation
-    //     .lerp(direction, time.delta_seconds() * CAM_LERP_FACTOR);
-    
-    let camera_x = player_x;
-    let camera_y = player_y;
-    // let destination = *npc_grid_coords + movement_direction;
-    let movement_direction = GridCoords::new(camera_x, camera_y);
-    let destination = *camera + movement_direction;
-    *camera = destination;
-    // let camera_direction: GridCoords = GridCoords::new(camera.x, camera.y);
-    //for mut camera_grid_coords in camera.iter_mut() {
-        // if npc_timer.walk_timer.finished() {
-            // let destination = camera_grid_coords + movement_direction;
-            //if !level_walls.in_wall(&destination) {
-            //    camera_grid_coords = destination;
-            //}
-        // }
-    //}
+        // let pos = player_transform.translation;
 
+        for mut transform in &mut camera {
+            // transform.translation.x = pos.x;
+            // transform.translation.y = pos.y;
+            transform.translation.x = pos_x as f32 * 10.;
+            transform.translation.y = pos_y as f32 * 10.;
+        }
+    }
 }
 
 // Tests for the abstract factory dialogue class
