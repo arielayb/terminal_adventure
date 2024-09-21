@@ -1,6 +1,5 @@
 use crate::states::*;
-// use bevy::prelude::*;
-use bevy::{prelude::*, render::camera::ScalingMode};
+use bevy::prelude::*;
 use bevy::text::JustifyText;
 use bevy::audio::CpalSample;
 use bevy_text_popup::{TextPopupEvent, TextPopupPlugin, TextPopupButton, TextPopupTimeout, TextPopupLocation};
@@ -14,6 +13,7 @@ use name_maker::Gender;
 
 mod npc;
 mod player;
+mod event_system;
 
 /// Camera lerp factor.
 const CAM_LERP_FACTOR: f32 = 2.;
