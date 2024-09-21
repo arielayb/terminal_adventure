@@ -1,5 +1,6 @@
 use crate::states::*;
-use bevy::prelude::*;
+// use bevy::prelude::*;
+use bevy::{prelude::*, render::camera::ScalingMode};
 use bevy::text::JustifyText;
 use bevy::audio::CpalSample;
 use bevy_text_popup::{TextPopupEvent, TextPopupPlugin, TextPopupButton, TextPopupTimeout, TextPopupLocation};
@@ -14,6 +15,9 @@ use name_maker::Gender;
 mod npc;
 mod player;
 
+/// Camera lerp factor.
+const CAM_LERP_FACTOR: f32 = 2.;
+
 // Tag component used to tag entities added on the game screen
 #[derive(Component)]
 struct OnGameScreen;
@@ -26,10 +30,11 @@ impl Plugin for EntityLoader {
     fn build(&self, app: &mut App) {
         // app.configure_sets(Update, ());
 
-        app.add_systems(OnEnter(GameState::Running), (spawn_player, spawn_npc))
+        app.add_systems(OnEnter(GameState::Running), (camera_setup, spawn_player, spawn_npc))
             .register_ldtk_entity::<npc::NpcBundle>("NPC")
             .register_ldtk_entity::<player::PlayerBundle>("Player")
             .register_ldtk_int_cell_for_layer::<WallBundle>("Walls", 1)
+            .register_ldtk_int_cell_for_layer::<WallBundle>("Water", 1)
             .init_resource::<LevelWalls>()
             .init_resource::<npc::NpcWalkConfig>()
             .add_plugins(TextPopupPlugin)
@@ -37,9 +42,23 @@ impl Plugin for EntityLoader {
                                                     move_npc, 
                                                     translate_grid_coords_entities, 
                                                     cache_wall_locations, 
-                                                    npc_interact))
+                                                    npc_interact,
+                                                    update_camera))
             .add_systems(OnExit(GameState::Running), despawn_screen::<OnGameScreen>);
     }
+}
+
+// setup the world and camera
+fn camera_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    //commands.spawn(Camera2dBundle::default());
+    
+    let mut camera = Camera2dBundle::default();
+    camera.projection.scale = 0.3;
+    camera.transform.translation.x += 640.0/4.;
+    camera.transform.translation.y += 480.0/4.;
+    camera.camera.hdr = true;
+
+    commands.spawn(camera);
 }
 
 #[derive(Default, Resource)]
@@ -99,7 +118,7 @@ fn spawn_npc(mut commands: Commands)
     // let temp_hp: u32 = 10;
     let arr_dialogue: [&str; 5] = ["Hi...", "Hello..", "Yes?", "Go away.", "What do you want?"];
     let mut rng = thread_rng();
-    let i: usize  = rng.gen_range(1..=5);
+    let i: usize  = rng.gen_range(0..=4);
 
     commands.spawn(
         (npc::NpcBundle{
@@ -262,6 +281,24 @@ fn npc_interact(
                 timeout: TextPopupTimeout::Seconds(5),
                 ..default()
             });
+        }
+    }
+}
+
+/// Update the camera position by tracking the player.
+fn update_camera(
+    mut camera: Query<&mut Transform, (With<Camera2d>, Without<player::Player>)>,
+    player: Query<&mut GridCoords, With<player::Player>>
+) {
+    for player_transform in &player {
+        let pos_x = player_transform.x;
+        let pos_y = player_transform.y;
+
+        // let pos = player_transform.translation;
+
+        for mut transform in &mut camera {
+            transform.translation.x = pos_x as f32 * 15.;
+            transform.translation.y = pos_y as f32 * 15.;
         }
     }
 }

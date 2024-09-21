@@ -1,6 +1,7 @@
 use crate::states::*;
 use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
+use bevy::core_pipeline::bloom::BloomSettings;
 
 mod entity_loader;
 
@@ -23,14 +24,6 @@ impl Plugin for World {
 
 // setup the world and camera
 fn world_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    //commands.spawn(Camera2dBundle::default());
-    
-    let mut camera = Camera2dBundle::default();
-    camera.projection.scale = 0.5;
-    camera.transform.translation.x += 1280.0 / 4.0;
-    camera.transform.translation.y += 720.0 / 4.0;
-    commands.spawn(camera);
-
     commands.spawn(LdtkWorldBundle {
         ldtk_handle: asset_server.load("terminal_world.ldtk"),
         ..Default::default()
