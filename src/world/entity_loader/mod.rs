@@ -34,6 +34,7 @@ impl Plugin for EntityLoader {
             .register_ldtk_entity::<npc::NpcBundle>("NPC")
             .register_ldtk_entity::<player::PlayerBundle>("Player")
             .register_ldtk_int_cell_for_layer::<WallBundle>("Walls", 1)
+            .register_ldtk_int_cell_for_layer::<WallBundle>("Water", 1)
             .init_resource::<LevelWalls>()
             .init_resource::<npc::NpcWalkConfig>()
             .add_plugins(TextPopupPlugin)
@@ -53,15 +54,12 @@ fn camera_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     
     let mut camera = Camera2dBundle::default();
     camera.projection.scale = 0.3;
-    // camera.transform.scale.x = 1.5;
-    // camera.transform.scale.y = 1.5;
-    camera.transform.translation.x += 638.0/4.;
-    camera.transform.translation.y += 368.0/4.;
+    camera.transform.translation.x += 640.0/4.;
+    camera.transform.translation.y += 480.0/4.;
     camera.camera.hdr = true;
 
     commands.spawn(camera);
 }
-
 
 #[derive(Default, Resource)]
 struct LevelWalls {
@@ -292,23 +290,6 @@ fn update_camera(
     mut camera: Query<&mut Transform, (With<Camera2d>, Without<player::Player>)>,
     player: Query<&mut GridCoords, With<player::Player>>
 ) {
-    // let Ok(mut camera) = camera.get_single_mut() else {
-    //     return;
-    // };
-
-    // let Ok(player) = player.get_single() else {
-    //     return;
-    // };
-
-    // let pos = player.translation;
-    // let pos_x = player.x;
-    // let pos_y = player.y;
-
-    // for mut transform in &mut camera.iter_mut() {
-        // camera.x = pos_x;
-        // camera.y = pos_y;
-    // }
-
     for player_transform in &player {
         let pos_x = player_transform.x;
         let pos_y = player_transform.y;
@@ -316,10 +297,8 @@ fn update_camera(
         // let pos = player_transform.translation;
 
         for mut transform in &mut camera {
-            // transform.translation.x = pos.x;
-            // transform.translation.y = pos.y;
-            transform.translation.x = pos_x as f32 * 10.;
-            transform.translation.y = pos_y as f32 * 10.;
+            transform.translation.x = pos_x as f32 * 15.;
+            transform.translation.y = pos_y as f32 * 15.;
         }
     }
 }
