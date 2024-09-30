@@ -306,7 +306,11 @@ fn update_camera(
 // Tests for the abstract factory dialogue class
 #[cfg(test)]
 mod test{
+    use array2d::Array2D;
     use dialogue_factory::*;
+    use event_system::*;
+
+    use super::event_system;
 
     #[test]
     fn test_init_player_entity_factory(){
@@ -317,6 +321,57 @@ mod test{
         let name = String::from("Bobby");
 
         assert_eq!(&npc_name, &name);
+    }
+
+    #[test]
+    fn test_gen_matrix (){
+        let mut graph_base = event_system::AdjMatrixGraph{
+            num_vertices: 0,
+            directed: false,
+            matrix: Array2D::filled_with(0, 0, 0)
+        };
+
+        graph_base.gen_empty_matrix(5);
+        assert_eq!(graph_base.num_vertices, 5);
+        assert_ne!(graph_base.matrix, Array2D::filled_with(0, 0, 0));
+    }
+
+    #[test]
+    fn test_add_edge(){
+        let mut graph_base = event_system::AdjMatrixGraph{
+            num_vertices: 5,
+            directed: false,
+            matrix: Array2D::filled_with(0, 0, 0),
+        };
+
+        graph_base.gen_empty_matrix(5);
+        graph_base.add_edge(0, 1, 5);
+        graph_base.add_edge(1, 2, 10);
+        graph_base.add_edge(2, 3, 14);
+        graph_base.add_edge(0, 2, 51);
+
+        assert_eq!(graph_base.get_edge_weight(0, 1).unwrap_or(&0), Some(5).as_ref().unwrap_or(&0));
+        assert_eq!(graph_base.get_adj_vertices(0), vec![1,2]);
+        println!("what is edge weight? {:?}", graph_base.get_edge_weight(0, 1).unwrap_or(&0));
+        println!("what are the adj vertices for 0? {:?}", graph_base.get_adj_vertices(0));
+        println!("what are the adj vertices for 2? {:?}", graph_base.get_adj_vertices(2));
+
+    }
+
+    #[test]
+    fn test_display_graph() { 
+        let mut graph_base = event_system::AdjMatrixGraph{
+            num_vertices: 4,
+            directed: false,
+            matrix: Array2D::filled_with(0, 0, 0),
+        };
+
+        graph_base.gen_empty_matrix(4);
+        graph_base.add_edge(0, 1, 5);
+        graph_base.add_edge(1, 2, 10);
+        graph_base.add_edge(2, 3, 14);
+        graph_base.add_edge(0, 2, 51);
+        graph_base.display();
     }
 
     // #[test]
