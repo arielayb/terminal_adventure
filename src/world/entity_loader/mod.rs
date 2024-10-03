@@ -362,15 +362,16 @@ mod test{
     fn test_display_graph() { 
         let mut graph_base = event_system::AdjMatrixGraph{
             num_vertices: 4,
-            directed: false,
+            directed: true,
             matrix: Array2D::filled_with(0, 0, 0),
         };
 
         graph_base.gen_empty_matrix(4);
-        graph_base.add_edge(0, 1, 5);
-        graph_base.add_edge(1, 2, 10);
-        graph_base.add_edge(2, 3, 14);
-        graph_base.add_edge(0, 2, 51);
+        graph_base.add_edge(0, 1, 12);
+        graph_base.add_edge(1, 2, 11);
+        graph_base.add_edge(2, 3, 1);
+        graph_base.add_edge(1, 3, 5);
+        graph_base.add_edge(0, 2, 18);
         graph_base.display();
     }
 

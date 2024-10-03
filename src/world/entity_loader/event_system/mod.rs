@@ -3,81 +3,6 @@ use array2d::{Array2D, Error};
 use std::vec;
 use std::convert::TryFrom;
 
-/*
-public class AdjacencyMatrixGraph : GraphBase{
-    int[,] Matrix;
-    
-    public AdjacencyMatrixGraph(int numVertices, bool directed = false) : base(numVertices, directed)
-    {
-        GenerateEmptyMatrix(numVertices);
-    }
-
-    // public void Start() {
-    //     AdjacencyMatrixGraph adjMatrixGraph = new AdjacencyMatrixGraph(9, false);
-    //     adjMatrixGraph.AddEdge(0, 8);
-    //     adjMatrixGraph.AddEdge(0, 3);
-    //     adjMatrixGraph.AddEdge(8, 4);
-    //     adjMatrixGraph.AddEdge(8, 3);
-    //     // adjMatrixGraph.GetAdjacentVertices(8);
-    //     adjMatrixGraph.Display();
-    // }
-
-    private void GenerateEmptyMatrix(int numVertices)
-    {
-        this.Matrix = new int[numVertices, numVertices];
-        for (int row = 0; row < numVertices; row++)
-        {
-            for (int col = 0; col < numVertices; col++)
-            {
-                Matrix[row, col] = 0;
-            }
-        }
-    }
-
-    public override IEnumerable<int> GetAdjacentVertices(int v)
-    {
-        if (v < 0 || v >= this.numVertices) throw new ArgumentOutOfRangeException("Cannot access vertex");
-
-        List<int> adjacentVertices = new List<int>();
-        for (int i = 0; i < this.numVertices; i++)
-        {
-            if (this.Matrix[v, i] > 0)
-                adjacentVertices.Add(i);
-        }
-        return adjacentVertices;
-    }
-
-    public override void AddEdge(int v1, int v2, int weight = 1){
-        if (v1 >= this.numVertices || v2 >= this.numVertices || v1 < 0 || v2 < 0)
-        throw new ArgumentOutOfRangeException("Vertices are out of bounds");
-
-        if (weight < 1) throw new ArgumentException("Weight cannot be less than 1");
-
-        this.Matrix[v1, v2] = weight;
-
-        //In an undirected graph all edges are bi-directional
-        if (!this.directed) 
-            this.Matrix[v2, v1] = weight;
-    }
-
-    public override int GetEdgeWeight(int v1, int v2)
-    {
-        return this.Matrix[v1, v2];
-    }
-
-    public override void Display()
-    {
-       for(int i = 0; i < this.Matrix.GetLength(0); i++){ 
-            for(int j = i+1; j < this.Matrix.GetLength(1); j++){
-                if(this.Matrix[i,j] == 1){
-                    Debug.Log(i+"->"+j);
-                }
-            }
-       }
-    }
-}
-*/
-
 pub trait GraphBaseEvent{
     fn gen_empty_matrix(&mut self, num_vertices: usize);
     fn add_edge(&mut self, v1: usize, v2: usize, weight: u32);
@@ -113,7 +38,7 @@ impl GraphBaseEvent for AdjMatrixGraph{
         }
 
         // self.matrix[v1][v2] = weight;
-        //let _ = self.matrix.set(v1, v2, weight);
+        let _ = self.matrix.set(v1, v2, weight);
 
         //In an undirected graph all edges are bi-directional
         if !self.directed {
@@ -146,10 +71,9 @@ impl GraphBaseEvent for AdjMatrixGraph{
     }
 
     fn display(&mut self){
-        for i in 0..=self.matrix.num_rows().try_into().unwrap() { 
-            for j in i+1..=self.matrix.num_columns().try_into().unwrap() {
-                //if self.matrix[i][j] == 1 {
-                if self.matrix.get(i, j).is_some() {
+        for i in 0..=self.matrix.row_len().try_into().unwrap() { 
+            for j in i+1..=self.matrix.column_len().try_into().unwrap() {
+                if self.matrix.get(i, j) >= Some(&1) {
                     println!("{} -> {}", i, j);
                 }
             }
