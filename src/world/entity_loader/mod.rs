@@ -307,6 +307,7 @@ fn update_camera(
 #[cfg(test)]
 mod test{
     use array2d::Array2D;
+    use bevy::reflect::Reflect;
     use dialogue_factory::*;
     use event_system::*;
 
@@ -344,14 +345,15 @@ mod test{
             matrix: Array2D::filled_with(0, 0, 0),
         };
 
-        graph_base.gen_empty_matrix(5);
+        graph_base.gen_empty_matrix(4);
         graph_base.add_edge(0, 1, 5);
         graph_base.add_edge(1, 2, 10);
         graph_base.add_edge(2, 3, 14);
         graph_base.add_edge(0, 2, 51);
 
         assert_eq!(graph_base.get_edge_weight(0, 1).unwrap_or(&0), Some(5).as_ref().unwrap_or(&0));
-        assert_eq!(graph_base.get_adj_vertices(0), vec![1,2]);
+        assert_eq!(graph_base.get_adj_vertices(0), vec![1, 2]);
+        assert_eq!(graph_base.get_adj_vertices(2), vec![0, 1, 3]);
         println!("what is edge weight? {:?}", graph_base.get_edge_weight(0, 1).unwrap_or(&0));
         println!("what are the adj vertices for 0? {:?}", graph_base.get_adj_vertices(0));
         println!("what are the adj vertices for 2? {:?}", graph_base.get_adj_vertices(2));
@@ -359,7 +361,7 @@ mod test{
     }
 
     #[test]
-    fn test_display_graph() { 
+    fn test_num_of_vertices() { 
         let mut graph_base = event_system::AdjMatrixGraph{
             num_vertices: 4,
             directed: true,
@@ -373,48 +375,7 @@ mod test{
         graph_base.add_edge(1, 3, 5);
         graph_base.add_edge(0, 2, 18);
         graph_base.display();
+
+        assert_eq!(graph_base.num_of_vertices(), 4);
     }
-
-    // #[test]
-    // fn test_init_npc_entity_factory(){
-    //     let entity_fact = EntityFactory {};
-    //     let npc_factory = AbstractEntityFactory::create_npc_entity(&entity_fact, String::from("Bob")); 
-        
-    //     let npc = npc_factory.npc_entity(String::from("Bob"), 10);
-    //     // let npc = npc_factory.npc_entity(String::from("npc1"));
-    //     // let enemey = enemy_factory.enemy_entity(String::from("enemy1"));
-
-    //     let npc_ent = NpcEntity{name: String::from("Bob"), health: 10};
-
-    //     assert_eq!(&npc.name, &npc_ent.name);
-    //     assert_eq!(&npc.health, &npc_ent.health);
-    // }
-
-    // #[test]
-    // fn test_init_player_entity_factory(){
-    //     let entity_fact = EntityFactory {};
-    //     let player_factory = AbstractEntityFactory::create_player_entity(&entity_fact, String::from("ariel")); 
-        
-    //     let player = player_factory.player_entity(String::from("ariel"), 10, 5);
-    //     let player_ent = PlayerEntity{name: String::from("ariel"), health: 10, tech: 5};
-
-    //     assert_eq!(&player.name, &player_ent.name);
-    //     assert_eq!(&player.health, &player_ent.health);
-    //     assert_eq!(&player.tech, &player_ent.tech);
-    // }
-
-    // #[test]
-    // fn test_init_npc_entity_factory(){
-    //     let entity_fact = EntityFactory {};
-    //     let npc_factory = AbstractEntityFactory::create_npc_entity(&entity_fact, String::from("Bob")); 
-        
-    //     let npc = npc_factory.npc_entity(String::from("Bob"), 10);
-    //     // let npc = npc_factory.npc_entity(String::from("npc1"));
-    //     // let enemey = enemy_factory.enemy_entity(String::from("enemy1"));
-
-    //     let npc_ent = NpcEntity{name: String::from("Bob"), health: 10};
-
-    //     assert_eq!(&npc.name, &npc_ent.name);
-    //     assert_eq!(&npc.health, &npc_ent.health);
-    // }
 }
