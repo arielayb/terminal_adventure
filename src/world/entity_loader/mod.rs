@@ -1,3 +1,9 @@
+/*
+    entity_loader module
+    This module focuses on loading the entities and setting up the small
+    components for NPCs and player modules.
+*/
+
 use crate::states::*;
 use bevy::prelude::*;
 use bevy::text::JustifyText;
@@ -15,7 +21,7 @@ mod npc;
 mod player;
 mod event_system;
 
-/// Camera lerp factor.
+// Camera lerp factor.
 const CAM_LERP_FACTOR: f32 = 2.;
 
 // Tag component used to tag entities added on the game screen
@@ -307,9 +313,9 @@ fn update_camera(
 #[cfg(test)]
 mod test{
     use array2d::Array2D;
-    use bevy::reflect::Reflect;
     use dialogue_factory::*;
     use event_system::*;
+    use dice::dice;
 
     use super::event_system;
 
@@ -364,7 +370,7 @@ mod test{
     fn test_num_of_vertices() { 
         let mut graph_base = event_system::AdjMatrixGraph{
             num_vertices: 4,
-            directed: true,
+            directed: false,
             matrix: Array2D::filled_with(0, 0, 0),
         };
 
@@ -377,5 +383,33 @@ mod test{
         graph_base.display();
 
         assert_eq!(graph_base.num_of_vertices(), 4);
+    }
+
+    #[test]
+    fn test_get_edge_weight() {
+        let mut graph_base = event_system::AdjMatrixGraph{
+            num_vertices: 4,
+            directed: false,
+            matrix: Array2D::filled_with(0, 0, 0),
+        };
+
+        graph_base.gen_empty_matrix(4);
+        graph_base.add_edge(0, 1, 12);
+        graph_base.add_edge(1, 2, 11);
+        graph_base.add_edge(2, 3, 1);
+        graph_base.add_edge(1, 3, 5);
+        graph_base.add_edge(0, 2, 18);
+
+        assert_eq!(graph_base.get_edge_weight(1, 2), Some(&11));
+        println!("{:?}", graph_base.get_edge_weight(1, 2).unwrap_or(&0));
+    }
+
+    #[test]
+    fn test_dice_roll_weight() {
+        let mut graph_base = event_system::AdjMatrixGraph{
+            num_vertices: 4,
+            directed: false,
+            matrix: Array2D::filled_with(0, 0, 0),
+        };
     }
 }
