@@ -19,7 +19,7 @@ use name_maker::Gender;
 
 mod npc;
 mod player;
-mod event_system;
+mod graph_system;
 
 // Camera lerp factor.
 const CAM_LERP_FACTOR: f32 = 2.;
@@ -314,10 +314,10 @@ fn update_camera(
 mod test{
     use array2d::Array2D;
     use dialogue_factory::*;
-    use event_system::*;
-    use dice::dice;
+    use graph_system::*;
+    use super::graph_system;
+    use dice_system::*;
 
-    use super::event_system;
 
     #[test]
     fn test_init_player_entity_factory(){
@@ -332,7 +332,7 @@ mod test{
 
     #[test]
     fn test_gen_matrix (){
-        let mut graph_base = event_system::AdjMatrixGraph{
+        let mut graph_base = graph_system::AdjMatrixGraph{
             num_vertices: 0,
             directed: false,
             matrix: Array2D::filled_with(0, 0, 0)
@@ -345,7 +345,7 @@ mod test{
 
     #[test]
     fn test_add_edge(){
-        let mut graph_base = event_system::AdjMatrixGraph{
+        let mut graph_base = graph_system::AdjMatrixGraph{
             num_vertices: 5,
             directed: false,
             matrix: Array2D::filled_with(0, 0, 0),
@@ -368,7 +368,7 @@ mod test{
 
     #[test]
     fn test_num_of_vertices() { 
-        let mut graph_base = event_system::AdjMatrixGraph{
+        let mut graph_base = graph_system::AdjMatrixGraph{
             num_vertices: 4,
             directed: false,
             matrix: Array2D::filled_with(0, 0, 0),
@@ -387,7 +387,7 @@ mod test{
 
     #[test]
     fn test_get_edge_weight() {
-        let mut graph_base = event_system::AdjMatrixGraph{
+        let mut graph_base = graph_system::AdjMatrixGraph{
             num_vertices: 4,
             directed: false,
             matrix: Array2D::filled_with(0, 0, 0),
@@ -406,10 +406,15 @@ mod test{
 
     #[test]
     fn test_dice_roll_weight() {
-        let mut graph_base = event_system::AdjMatrixGraph{
+        let mut graph_base = graph_system::AdjMatrixGraph{
             num_vertices: 4,
             directed: false,
             matrix: Array2D::filled_with(0, 0, 0),
         };
+    }
+
+    #[test]
+    fn test_rool_for_event() {
+        
     }
 }
