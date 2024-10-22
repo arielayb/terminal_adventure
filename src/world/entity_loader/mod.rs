@@ -20,6 +20,7 @@ use name_maker::Gender;
 mod npc;
 mod player;
 mod graph_system;
+mod dice_system;
 
 // Camera lerp factor.
 const CAM_LERP_FACTOR: f32 = 2.;
@@ -316,8 +317,9 @@ mod test{
     use dialogue_factory::*;
     use graph_system::*;
     use super::graph_system;
-    use dice_system::*;
-
+    use super::dice_system::*;
+    use dice::results::AllRollResults;
+    use dice::dice::roll;
 
     #[test]
     fn test_init_player_entity_factory(){
@@ -414,7 +416,14 @@ mod test{
     }
 
     #[test]
-    fn test_rool_for_event() {
-        
+    fn test_roll_result_from_struct() {
+
+        let dice = DiceSystem{
+            roll_result: roll("1d20")
+        };
+
+        let result = &dice.roll_result;
+
+        assert_eq!(dice.roll_result.total, result.total);
     }
 }
