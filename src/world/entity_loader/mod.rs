@@ -407,15 +407,6 @@ mod test{
     }
 
     #[test]
-    fn test_dice_roll_weight() {
-        let mut graph_base = graph_system::AdjMatrixGraph{
-            num_vertices: 4,
-            directed: false,
-            matrix: Array2D::filled_with(0, 0, 0),
-        };
-    }
-
-    #[test]
     fn test_roll_result_from_struct() {
 
         let dice = DiceSystem{
@@ -425,5 +416,37 @@ mod test{
         let result = &dice.roll_result;
 
         assert_eq!(dice.roll_result.total, result.total);
+        assert_eq!(dice.roll_result.total as u32, result.total as u32);
+    }
+
+    #[test]
+    fn test_roll_for_event() {
+        let event_dice = DiceSystem{
+            roll_result: roll("1d20")
+        };
+
+        let mut graph_base = graph_system::AdjMatrixGraph{
+            num_vertices: 0,
+            directed: false,
+            matrix: Array2D::filled_with(0, 0, 0),
+        };
+
+        graph_base.gen_empty_matrix(4);
+        graph_base.add_edge(0, 1, event_dice.roll_result.total as u32);
+        graph_base.add_edge(1, 2, event_dice.roll_result.total as u32);
+        graph_base.add_edge(2, 3, event_dice.roll_result.total as u32);
+        graph_base.add_edge(1, 3, event_dice.roll_result.total as u32);
+        graph_base.add_edge(0, 2, event_dice.roll_result.total as u32);
+
+        assert_eq!(graph_base.get_edge_weight(0, 1), Some(&(event_dice.roll_result.total as u32)));
+        assert_eq!(graph_base.get_edge_weight(1, 2), Some(&(event_dice.roll_result.total as u32)));
+        assert_eq!(graph_base.get_edge_weight(2, 3), Some(&(event_dice.roll_result.total as u32)));
+        assert_eq!(graph_base.get_edge_weight(1, 3), Some(&(event_dice.roll_result.total as u32)));
+        assert_eq!(graph_base.get_edge_weight(0, 2), Some(&(event_dice.roll_result.total as u32)));
+    
+        assert_eq!(graph_base.get_adj_vertices(0), vec![1, 2]);
+        assert_eq!(graph_base.get_adj_vertices(2), vec![0, 1, 3]);
+        println!("what are the adj vertices for 0? {:?}", graph_base.get_adj_vertices(0));
+        println!("what are the adj vertices for 2? {:?}", graph_base.get_adj_vertices(2));
     }
 }
