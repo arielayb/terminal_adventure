@@ -13,7 +13,6 @@ use bevy_ecs_ldtk::prelude::*;
 use rand::prelude::*;
 use std::collections::HashSet;
 use std::ops::Index;
-use std::{thread, time::Duration};
 use name_maker::RandomNameGenerator;
 use name_maker::Gender;
 
@@ -21,9 +20,6 @@ mod npc;
 mod player;
 mod graph_system;
 mod dice_system;
-
-// Camera lerp factor.
-const CAM_LERP_FACTOR: f32 = 2.;
 
 // Tag component used to tag entities added on the game screen
 #[derive(Component)]
@@ -56,7 +52,7 @@ impl Plugin for EntityLoader {
 }
 
 // setup the world and camera
-fn camera_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn camera_setup(mut commands: Commands) {
     //commands.spawn(Camera2dBundle::default());
     
     let mut camera = Camera2dBundle::default();
@@ -410,19 +406,23 @@ mod test{
     fn test_roll_result_from_struct() {
 
         let dice = DiceSystem{
-            roll_result: roll("1d20")
+            dice_event: roll("1d20"),
+            dice_attack: roll("1d20"),
+            dice_tech: roll("1d20")
         };
 
-        let result = &dice.roll_result;
+        let result = &dice.dice_event;
 
-        assert_eq!(dice.roll_result.total, result.total);
-        assert_eq!(dice.roll_result.total as u32, result.total as u32);
+        assert_eq!(dice.dice_event.total, result.total);
+        assert_eq!(dice.dice_event.total as u32, result.total as u32);
     }
 
     #[test]
     fn test_roll_for_event() {
         let event_dice = DiceSystem{
-            roll_result: roll("1d20")
+            dice_event: roll("1d20"),
+            dice_attack: roll("1d20"),
+            dice_tech: roll("1d20")
         };
 
         let mut graph_base = graph_system::AdjMatrixGraph{
@@ -432,17 +432,17 @@ mod test{
         };
 
         graph_base.gen_empty_matrix(4);
-        graph_base.add_edge(0, 1, event_dice.roll_result.total as u32);
-        graph_base.add_edge(1, 2, event_dice.roll_result.total as u32);
-        graph_base.add_edge(2, 3, event_dice.roll_result.total as u32);
-        graph_base.add_edge(1, 3, event_dice.roll_result.total as u32);
-        graph_base.add_edge(0, 2, event_dice.roll_result.total as u32);
+        graph_base.add_edge(0, 1, event_dice.dice_event.total as u32);
+        graph_base.add_edge(1, 2, event_dice.dice_event.total as u32);
+        graph_base.add_edge(2, 3, event_dice.dice_event.total as u32);
+        graph_base.add_edge(1, 3, event_dice.dice_event.total as u32);
+        graph_base.add_edge(0, 2, event_dice.dice_event.total as u32);
 
-        assert_eq!(graph_base.get_edge_weight(0, 1), Some(&(event_dice.roll_result.total as u32)));
-        assert_eq!(graph_base.get_edge_weight(1, 2), Some(&(event_dice.roll_result.total as u32)));
-        assert_eq!(graph_base.get_edge_weight(2, 3), Some(&(event_dice.roll_result.total as u32)));
-        assert_eq!(graph_base.get_edge_weight(1, 3), Some(&(event_dice.roll_result.total as u32)));
-        assert_eq!(graph_base.get_edge_weight(0, 2), Some(&(event_dice.roll_result.total as u32)));
+        assert_eq!(graph_base.get_edge_weight(0, 1), Some(&(event_dice.dice_event.total as u32)));
+        assert_eq!(graph_base.get_edge_weight(1, 2), Some(&(event_dice.dice_event.total as u32)));
+        assert_eq!(graph_base.get_edge_weight(2, 3), Some(&(event_dice.dice_event.total as u32)));
+        assert_eq!(graph_base.get_edge_weight(1, 3), Some(&(event_dice.dice_event.total as u32)));
+        assert_eq!(graph_base.get_edge_weight(0, 2), Some(&(event_dice.dice_event.total as u32)));
     
         assert_eq!(graph_base.get_adj_vertices(0), vec![1, 2]);
         assert_eq!(graph_base.get_adj_vertices(2), vec![0, 1, 3]);
