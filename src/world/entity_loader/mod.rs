@@ -3,7 +3,6 @@
     This module focuses on loading the entities and setting up the small
     components for NPCs and player modules.
 */
-
 use crate::states::*;
 use bevy::prelude::*;
 use bevy::text::JustifyText;
