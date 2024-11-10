@@ -2,5 +2,13 @@
     "git.ignoreLimitWarning": true,
     "cmake.configureOnOpen": true,
     "rust-analyzer.showUnlinkedFileNotification": false,
-    "rust-analyzer.checkOnSave": false
+    "rust-analyzer.checkOnSave": false,
+    "rust-analyzer.linkedProjects": [
+            "Cargo.toml",],
+    "terminal.integrated.profiles.linux": {
+        "bash": {
+            "path": "bash",
+            "args": ["-l"]
+        }
+    }
 }

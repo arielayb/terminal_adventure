@@ -263,7 +263,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="7mKaSmNe3YwWE406bUEa" name="Page-4">
-    <mxGraphModel dx="989" dy="590" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="1434" dy="856" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -330,7 +330,7 @@
           <mxGeometry x="75" y="320" width="240" height="30" as="geometry" />
         </mxCell>
         <mxCell id="mUV60eWrKkFb1B9KUzyj-18" value="Once a player enters a location, another dark roll 1d20 will take place.&lt;br&gt;&lt;br&gt;Evil:&lt;br&gt;Crime is on the rise, bandits attack the village. &lt;br&gt;&lt;br&gt;Village or town is under a curse:&lt;br&gt;ghost, demons, and a witch cult." style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="mUV60eWrKkFb1B9KUzyj-1">
-          <mxGeometry x="10" y="428" width="420" height="110" as="geometry" />
+          <mxGeometry x="10" y="450" width="420" height="110" as="geometry" />
         </mxCell>
         <mxCell id="mUV60eWrKkFb1B9KUzyj-19" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endArrow=none;endFill=0;" edge="1" parent="mUV60eWrKkFb1B9KUzyj-1" source="mUV60eWrKkFb1B9KUzyj-21" target="mUV60eWrKkFb1B9KUzyj-26">
           <mxGeometry relative="1" as="geometry" />

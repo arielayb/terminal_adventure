@@ -1,4 +1,4 @@
-<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.17 Chrome/128.0.6613.186 Electron/32.2.2 Safari/537.36" version="24.7.17" pages="4">
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.17 Chrome/128.0.6613.36 Electron/32.0.1 Safari/537.36" version="24.7.17" pages="5">
   <diagram name="Page-1" id="EQZtutGkIHI31SSUe3kO">
     <mxGraphModel dx="819" dy="489" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
@@ -381,6 +381,23 @@
         </mxCell>
         <mxCell id="mUV60eWrKkFb1B9KUzyj-37" value="Event id: 5&lt;br&gt;eventStr: &quot;evil&quot;&lt;div&gt;roll_weight: 16&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="mUV60eWrKkFb1B9KUzyj-1">
           <mxGeometry x="580" y="250" width="110" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="VojvDWJy-TKYko2G3sH0" name="Page-5">
+    <mxGraphModel dx="1434" dy="825" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="xnVxZtC6TcenbkKllUDB-1" value="Player Properties" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry width="730" height="740" as="geometry" />
+        </mxCell>
+        <mxCell id="xnVxZtC6TcenbkKllUDB-2" value="player stats:&lt;br&gt;&lt;ul&gt;&lt;li&gt;health&lt;/li&gt;&lt;li&gt;tech&lt;/li&gt;&lt;li&gt;luck&lt;/li&gt;&lt;li&gt;charm&lt;/li&gt;&lt;li&gt;agility&lt;/li&gt;&lt;li&gt;weapon exp&lt;/li&gt;&lt;li&gt;level&lt;/li&gt;&lt;li&gt;zodiac sign&lt;/li&gt;&lt;li&gt;strength&lt;/li&gt;&lt;/ul&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="xnVxZtC6TcenbkKllUDB-1">
+          <mxGeometry x="20" y="30" width="130" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="xnVxZtC6TcenbkKllUDB-3" value="Skill Tree:&lt;div&gt;&lt;ul&gt;&lt;li&gt;class:&lt;/li&gt;&lt;ul&gt;&lt;li style=&quot;&quot;&gt;engineer (psy perk == remote viewing)&lt;/li&gt;&lt;li&gt;gun sligner (psy perk == teleportation)&lt;/li&gt;&lt;li&gt;commando (psy perk == telekinesis)&lt;/li&gt;&lt;li&gt;scientist (psy perk == precognition)&lt;/li&gt;&lt;li&gt;monk (psy perk == photokinesis)&lt;/li&gt;&lt;li&gt;swords men (psy perk == psychic hold)&lt;/li&gt;&lt;li&gt;agent (psy perk == pyrokinesis)&lt;/li&gt;&lt;/ul&gt;&lt;/ul&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="420" y="28" width="310" height="170" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
