@@ -313,7 +313,6 @@ mod test{
     use graph_system::*;
     use super::graph_system;
     use super::dice_system::*;
-    use dice::results::AllRollResults;
     use dice::dice::roll;
 
     #[test]
