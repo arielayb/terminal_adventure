@@ -314,6 +314,7 @@ mod test{
     use super::graph_system;
     use super::dice_system::*;
     use dice::dice::roll;
+    use super::player::*;
 
     #[test]
     fn test_init_player_entity_factory(){
@@ -402,11 +403,8 @@ mod test{
 
     #[test]
     fn test_roll_result_from_struct() {
-
-        let dice = DiceSystem{
+        let dice = DiceEventSystem{
             dice_event: roll("1d20"),
-            dice_attack: roll("1d20"),
-            dice_tech: roll("1d20")
         };
 
         let result = &dice.dice_event;
@@ -417,10 +415,8 @@ mod test{
 
     #[test]
     fn test_roll_for_event() {
-        let event_dice = DiceSystem{
+        let event_dice = DiceEventSystem{
             dice_event: roll("1d20"),
-            dice_attack: roll("1d20"),
-            dice_tech: roll("1d20")
         };
 
         let mut graph_base = graph_system::AdjMatrixGraph{
@@ -447,4 +443,29 @@ mod test{
         println!("what are the adj vertices for 0? {:?}", graph_base.get_adj_vertices(0));
         println!("what are the adj vertices for 2? {:?}", graph_base.get_adj_vertices(2));
     }
+
+    #[test]
+    fn test_set_and_get_player_name() {
+        let player_info = PlayerName{
+            player_name: String::from("Ariel")
+        };
+
+        let name = player_info.get_player_name();
+
+        println!("{:?}", name);
+
+        assert_eq!(name, String::from("Ariel"));
+
+        let mut player_set_info = PlayerName{
+            player_name: String::from("None")
+        };
+
+        player_set_info.set_player_name(String::from("Bob"));
+
+        let get_name = player_set_info.get_player_name();
+        
+        println!("{:?}", get_name);
+        assert_eq!(get_name, String::from("Bob"));
+    }
 }
+

@@ -9,6 +9,16 @@ pub struct PlayerName{
     pub player_name: String
 }
 
+impl PlayerName {
+    pub fn set_player_name(&mut self, name: String) {
+        self.player_name = name;
+    }
+
+    pub fn get_player_name(self) -> String {
+        return self.player_name;
+    }
+}
+
 #[derive(Default, Component, Debug)]
 pub struct PlayerHealth{
     pub player_hp: u32
