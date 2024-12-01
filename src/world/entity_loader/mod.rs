@@ -17,6 +17,7 @@ use name_maker::Gender;
 
 mod npc;
 mod player;
+mod enemy;
 mod graph_system;
 mod dice_system;
 
@@ -88,8 +89,7 @@ struct WallBundle {
     wall: Wall,
 }
 
-fn spawn_player(mut commands: Commands) 
-{
+fn spawn_player(mut commands: Commands) {
     // TODO: work on removing factory design pattern in next goal
     let temp_name = String::from("ariel");
     let temp_hp: u32 = 10;
@@ -107,8 +107,7 @@ fn spawn_player(mut commands: Commands)
     ).insert(player::PlayerEvents{interact: false});
 }
 
-fn spawn_npc(mut commands: Commands) 
-{
+fn spawn_npc(mut commands: Commands) {
     // TODO: work on design patterns for random NPC generator in next goal
     // get a range for the name
     //let rng = RNG::try_from(&Language::Fantasy).unwrap();
@@ -258,16 +257,16 @@ fn npc_interact(
     mut npc_name: Query<&npc::NpcName, With<npc::NpcName>>,
     mut npc_dialogue: Query<&npc::NpcDialogue, With<npc::NpcDialogue>>
 
-){
+) {
     if players
         .iter()
         .zip(npc_coords.iter())
         .any(|(player_grid_coords, npc_grid_coords)| player_grid_coords == npc_grid_coords)
     {
         info!("Npc collision detected...");
-        let mut rng = thread_rng();
+        //let mut rng = thread_rng();
         let touch = player_event.single_mut();
-        let n: usize = rng.gen_range(0..=4);
+        //let n: usize = rng.gen_range(0..=4);
 
         if touch.interact {
             info!("<<< NPC interaction >>>");
@@ -315,6 +314,7 @@ mod test{
     use super::dice_system::*;
     use dice::dice::roll;
     use super::player::*;
+    use super::enemy::*;
 
     #[test]
     fn test_init_player_entity_factory(){
@@ -442,6 +442,39 @@ mod test{
         assert_eq!(graph_base.get_adj_vertices(2), vec![0, 1, 3]);
         println!("what are the adj vertices for 0? {:?}", graph_base.get_adj_vertices(0));
         println!("what are the adj vertices for 2? {:?}", graph_base.get_adj_vertices(2));
+    }
+
+    #[test]
+    fn test_roll_for_attack() {
+        let player_info = PlayerName{
+            player_name: String::from("Ariel")
+        };
+
+        let player_health = PlayerHealth{
+            player_hp: 25
+        };
+
+        let mut player_attack_dice = DiceAttackSystem{
+            dice_attack: roll("1d20"),
+        };
+
+        let enemy_info = EnemyName{
+            enemy_name: String::from("Mufaba")
+        };
+
+        let enemy_health = EnemyHealth{
+            enemy_hp: 25
+        };
+
+        let mut enemy_attck_dice = DiceAttackSystem{
+            dice_attack: roll("1d20"),
+        };
+
+        let mut attack_result = &mut player_attack_dice;
+
+        println!("what are the attack result? {:?}", attack_result.roll_for_attack().total);
+        println!("get the attack result, {:?}", attack_result.get_attack_roll().total);
+        //assert_eq!(attack_result.dice_attack.total, attack_result.get_attack_roll().total);
     }
 
     #[test]

@@ -7,6 +7,7 @@ pub trait DiceRollEvent{
 
 pub trait DiceRollAttack{
     fn roll_for_attack(&mut self) -> &AllRollResults;
+    fn get_attack_roll(&mut self) -> &AllRollResults;
 }
 
 pub trait DiceRollTech{
@@ -73,6 +74,10 @@ impl DiceRollAttack for DiceAttackSystem{
     
         println!("Attack roll, {:?}", &self.dice_attack.total);
     
+        return &self.dice_attack;
+    }
+
+    fn get_attack_roll(&mut self) -> &AllRollResults {
         return &self.dice_attack;
     }
 }
