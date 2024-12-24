@@ -450,7 +450,7 @@ mod test{
             player_name: String::from("Ariel")
         };
 
-        let player_health = PlayerHealth{
+        let mut player_health = PlayerHealth{
             player_hp: 25
         };
 
@@ -466,16 +466,28 @@ mod test{
             enemy_hp: 25
         };
 
-        let enemy_attck_dice = DiceAttackSystem{
+        let mut enemy_attck_dice = DiceAttackSystem{
             dice_attack: roll("1d20"),
         };
 
-        let mut attack_result = player_attack_dice.get_attack_roll().total;
+        let attack_result = player_attack_dice.get_attack_roll().total;
+        let enemy_attack_result = enemy_attck_dice.get_attack_roll().total;
 
-        // println!("what are the attack result? {:?}", attack_result.roll_for_attack().total);
-        // println!("get the attack result, {:?}", attack_result.get_attack_roll().total);
-        // assert_eq!(attack_result, attack_result.clone());
+        println!("what is the player attack result? {:?}", attack_result);
+        println!("get the enemy attack result, {:?}", enemy_attack_result);
+
+        let player_hp_attacked_result = player_health.player_hp as isize - enemy_attack_result;
+
+        player_health.player_hp = player_hp_attacked_result as u32;
+
+        println!("the player hp result: {:?}", player_hp_attacked_result); 
+
         assert_ne!(attack_result, 0);
+        assert_ne!(enemy_attack_result, 0);
+        assert_eq!(player_info.player_name, String::from("Ariel"));
+        assert_eq!(enemy_info.enemy_name, String::from("Mufaba"));
+        assert_eq!(player_health.player_hp as isize, player_hp_attacked_result);
+        assert_eq!(enemy_health.enemy_hp, 25);
     }
 
     #[test]
