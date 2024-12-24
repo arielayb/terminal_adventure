@@ -466,15 +466,16 @@ mod test{
             enemy_hp: 25
         };
 
-        let mut enemy_attck_dice = DiceAttackSystem{
+        let enemy_attck_dice = DiceAttackSystem{
             dice_attack: roll("1d20"),
         };
 
-        let mut attack_result = &mut player_attack_dice;
+        let mut attack_result = player_attack_dice.get_attack_roll().total;
 
-        println!("what are the attack result? {:?}", attack_result.roll_for_attack().total);
-        println!("get the attack result, {:?}", attack_result.get_attack_roll().total);
-        //assert_eq!(attack_result.dice_attack.total, attack_result.get_attack_roll().total);
+        // println!("what are the attack result? {:?}", attack_result.roll_for_attack().total);
+        // println!("get the attack result, {:?}", attack_result.get_attack_roll().total);
+        // assert_eq!(attack_result, attack_result.clone());
+        assert_ne!(attack_result, 0);
     }
 
     #[test]
