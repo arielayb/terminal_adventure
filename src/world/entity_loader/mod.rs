@@ -476,9 +476,64 @@ mod test{
         println!("what is the player attack result? {:?}", attack_result);
         println!("get the enemy attack result, {:?}", enemy_attack_result);
 
+        // losing hp from attack dice roll
         let player_hp_attacked_result = player_health.player_hp as isize - enemy_attack_result;
-
         let enemy_hp_attacked_result = enemy_health.enemy_hp as isize - attack_result;
+
+        player_health.player_hp = player_hp_attacked_result as u32;
+        enemy_health.enemy_hp = enemy_hp_attacked_result as u32;
+
+        println!("the player hp result: {:?}", player_hp_attacked_result); 
+        println!("the enemy hp result: {:?}", enemy_hp_attacked_result); 
+
+        assert_ne!(attack_result, 0);
+        assert_ne!(enemy_attack_result, 0);
+        assert_eq!(player_info.player_name, String::from("Ariel"));
+        assert_eq!(enemy_info.enemy_name, String::from("Mufaba"));
+        assert_eq!(player_health.player_hp as isize, player_hp_attacked_result);
+        assert_eq!(enemy_health.enemy_hp as isize, enemy_hp_attacked_result);
+    }
+
+    #[test]
+    fn test_basic_roll_for_agility() {
+        let player_info = PlayerName{
+            player_name: String::from("Ariel")
+        };
+
+        let mut player_health = PlayerHealth{
+            player_hp: 25
+        };
+
+        let mut player_attack_dice = DiceAttackSystem{
+            dice_attack: roll("1d20"),
+        };
+
+        let mut player_agility_dice = DiceAgilitySystem{
+            dice_agility: roll("1d20"),
+        };
+
+        let enemy_info = EnemyName{
+            enemy_name: String::from("Mufaba")
+        };
+
+        let mut enemy_health = EnemyHealth{
+            enemy_hp: 25
+        };
+
+        let mut enemy_attck_dice = DiceAttackSystem{
+            dice_attack: roll("1d20"),
+        };
+
+        let attack_result = player_attack_dice.get_attack_roll().total;
+        let enemy_attack_result = enemy_attck_dice.get_attack_roll().total;
+
+        println!("what is the player attack result? {:?}", attack_result);
+        println!("get the enemy attack result, {:?}", enemy_attack_result);
+
+        
+            // losing hp from the attack dice roll
+            let player_hp_attacked_result = player_health.player_hp as isize - enemy_attack_result;
+            let enemy_hp_attacked_result = enemy_health.enemy_hp as isize - attack_result;
 
         player_health.player_hp = player_hp_attacked_result as u32;
         enemy_health.enemy_hp = enemy_hp_attacked_result as u32;
