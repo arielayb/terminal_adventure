@@ -16,6 +16,7 @@ pub trait DiceRollTech{
 
 pub trait DiceRollAgility{
     fn roll_for_agility(&mut self) -> &AllRollResults;
+    fn get_agility_roll(&mut self) -> &AllRollResults;
 }
 
 pub trait DiceRollCharm{
@@ -98,6 +99,10 @@ impl DiceRollAgility for DiceAgilitySystem{
     
         println!("Agility roll, {:?}", &self.dice_agility.total);
     
+        return &self.dice_agility;
+    }
+
+    fn get_agility_roll(&mut self) -> &AllRollResults {
         return &self.dice_agility;
     }
 }

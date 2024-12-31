@@ -524,16 +524,42 @@ mod test{
             dice_attack: roll("1d20"),
         };
 
+        let mut enemy_agility_dice = DiceAgilitySystem{
+            dice_agility: roll("1d20"),
+        };
+
+        // get the attack roll result from the dice
         let attack_result = player_attack_dice.get_attack_roll().total;
         let enemy_attack_result = enemy_attck_dice.get_attack_roll().total;
+
+        // get the agility roll result from the dice
+        let agility_result = player_agility_dice.get_agility_roll().total + 100;
+        let enemy_agility_result = enemy_agility_dice.get_agility_roll().total + 100;
 
         println!("what is the player attack result? {:?}", attack_result);
         println!("get the enemy attack result, {:?}", enemy_attack_result);
 
+        println!("what is the player agility result? {:?}", agility_result);
+        println!("get the enemy agility result, {:?}", enemy_agility_result);
+
+        let player_hp_attacked_result;
+        // guard for enemy atk is more than player agi 
+        if enemy_attack_result > agility_result {
+            // losing hp from the enemy attack dice roll
+            player_hp_attacked_result = player_health.player_hp as isize - enemy_attack_result;
+        } else {
+            // no result. The enemy's attack missed the player.
+            player_hp_attacked_result = 0;
+        }
         
-            // losing hp from the attack dice roll
-            let player_hp_attacked_result = player_health.player_hp as isize - enemy_attack_result;
-            let enemy_hp_attacked_result = enemy_health.enemy_hp as isize - attack_result;
+        let enemy_hp_attacked_result;
+        if attack_result > enemy_agility_result {
+            // losing hp from the player attack dice roll
+            enemy_hp_attacked_result = enemy_health.enemy_hp as isize - attack_result;
+        } else {
+            // no result. The player's attack missed the enemy.
+            enemy_hp_attacked_result = 0;
+        }
 
         player_health.player_hp = player_hp_attacked_result as u32;
         enemy_health.enemy_hp = enemy_hp_attacked_result as u32;
@@ -542,6 +568,11 @@ mod test{
         println!("the enemy hp result: {:?}", enemy_hp_attacked_result); 
 
         assert_ne!(attack_result, 0);
+        assert_ne!(enemy_attack_result, 0);
+        assert_eq!(player_hp_attacked_result, 0);
+        assert_eq!(enemy_hp_attacked_result, 0);
+        assert_ne!(agility_result, 0);
+        assert_ne!(enemy_agility_result, 0);
         assert_ne!(enemy_attack_result, 0);
         assert_eq!(player_info.player_name, String::from("Ariel"));
         assert_eq!(enemy_info.enemy_name, String::from("Mufaba"));
