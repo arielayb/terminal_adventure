@@ -585,7 +585,7 @@ mod test{
             player_hp: 25
         };
 
-        let mut player_defense_equip = DiceDefenseSystem{
+        let mut player_defense_equip = PlayerDef{
             equip_defense_val: 10,
         };
 

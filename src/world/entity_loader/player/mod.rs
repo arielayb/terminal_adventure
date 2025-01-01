@@ -65,6 +65,22 @@ pub struct PlayerStr{
 }
 
 #[derive(Default, Component, Debug)]
+pub struct PlayerDef{
+    pub equip_defense_val: u32
+}
+
+impl PlayerDef {
+    pub fn set_defense_equip(&mut self, equip_val: u32) {
+        println!("Defense value, {:?}", &self.equip_defense_val);
+        self.equip_defense_val = equip_val;
+    }
+
+    pub fn get_defense_equip(&mut self) -> &u32 {
+        return &self.equip_defense_val;
+    }
+}
+
+#[derive(Default, Component, Debug)]
 pub struct PlayerClass{
     pub player_class: String
 }

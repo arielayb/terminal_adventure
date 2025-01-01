@@ -10,11 +10,6 @@ pub trait DiceRollAttack{
     fn get_attack_roll(&mut self) -> &AllRollResults;
 }
 
-pub trait DiceRollDefense{
-    fn set_defense_equip(&mut self, equip_val: u32);
-    fn get_defense_equip(&mut self) -> &u32;
-}
-
 pub trait DiceRollTech{
     fn roll_for_tech(&mut self) -> &AllRollResults;
     fn get_tech_roll(&mut self) -> &AllRollResults;
@@ -90,17 +85,6 @@ impl DiceRollAttack for DiceAttackSystem{
 
     fn get_attack_roll(&mut self) -> &AllRollResults {
         return &self.dice_attack;
-    }
-}
-
-impl DiceRollDefense for DiceDefenseSystem{
-    fn set_defense_equip(&mut self, equip_val: u32) {
-        println!("Defense value, {:?}", &self.equip_defense_val);
-        self.equip_defense_val = equip_val;
-    }
-
-    fn get_defense_equip(&mut self) -> &u32 {
-        return &self.equip_defense_val;
     }
 }
 
