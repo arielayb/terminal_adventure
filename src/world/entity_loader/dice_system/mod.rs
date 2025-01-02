@@ -1,8 +1,13 @@
 use dice::results::AllRollResults;
 use dice::dice::roll;
+use super::player::PlayerStr;
+use super::player::PlayerAgility;
+use super::player::PlayerCharm;
+use super::player::PlayerLuck;
 
 pub trait DiceRollEvent{
     fn roll_for_event(&mut self) -> &AllRollResults;
+    fn get_event_roll(&mut self) -> &AllRollResults;
 }
 
 pub trait DiceRollAttack{
@@ -22,14 +27,17 @@ pub trait DiceRollAgility{
 
 pub trait DiceRollCharm{
     fn roll_for_charm(&mut self) -> &AllRollResults;
+    fn get_charm_roll(&mut self) -> &AllRollResults;
 }
 
 pub trait DiceRollStrength{
     fn roll_for_strength(&mut self) -> &AllRollResults;
+    fn get_strength_roll(&mut self) -> &AllRollResults;
 }
 
 pub trait DiceRollDark{
     fn roll_for_dark(&mut self) -> &AllRollResults;
+    fn get_dark_roll(&mut self) -> &AllRollResults;
 }
 
 pub struct DiceEventSystem{
@@ -70,6 +78,10 @@ impl DiceRollEvent for DiceEventSystem{
     
         println!("Event roll, {:?}", &self.dice_event.total);
     
+        return &self.dice_event;
+    }
+
+    fn get_event_roll(&mut self) -> &AllRollResults {
         return &self.dice_event;
     }
 }
@@ -124,6 +136,10 @@ impl DiceRollCharm for DiceCharmSystem{
     
         return &self.dice_charm;
     }
+
+    fn get_charm_roll(&mut self) -> &AllRollResults {
+        return &self.dice_charm;
+    }
 }
 
 impl DiceRollStrength for DiceStrengthSystem{
@@ -134,6 +150,10 @@ impl DiceRollStrength for DiceStrengthSystem{
     
         return &self.dice_strength;
     }
+
+    fn get_strength_roll(&mut self) -> &AllRollResults {
+        return &self.dice_strength;
+    }
 }
 
 impl DiceRollDark for DiceDarkSystem{
@@ -142,6 +162,10 @@ impl DiceRollDark for DiceDarkSystem{
     
         println!("Dark roll, {:?}", &self.dice_dark.total);
     
+        return &self.dice_dark;
+    }
+
+    fn get_dark_roll(&mut self) -> &AllRollResults {
         return &self.dice_dark;
     }
 }

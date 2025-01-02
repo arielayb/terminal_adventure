@@ -24,9 +24,31 @@ pub struct PlayerHealth{
     pub player_hp: u32
 }
 
+impl PlayerHealth {
+    pub fn set_hp(&mut self, hp_val: u32) {
+        println!("Health value, {:?}", &self.player_hp);
+        self.player_hp = hp_val;
+    }
+
+    pub fn get_hp(&mut self) -> &u32 {
+        return &self.player_hp;
+    }
+}
+
 #[derive(Default, Component, Debug)]
 pub struct PlayerTech{
     pub player_tp: u32
+}
+
+impl PlayerTech {
+    pub fn set_tp(&mut self, tp_val: u32) {
+        println!("Tech value, {:?}", &self.player_tp);
+        self.player_tp = tp_val;
+    }
+
+    pub fn get_tp(&mut self) -> &u32 {
+        return &self.player_tp;
+    }
 }
 
 #[derive(Default, Component, Debug)]
@@ -62,6 +84,17 @@ pub struct PlayerZodiac{
 #[derive(Default, Component, Debug)]
 pub struct PlayerStr{
     pub player_sp: u32
+}
+
+impl PlayerStr {
+    pub fn set_str(&mut self, str_val: u32) {
+        println!("Strength value, {:?}", &self.player_sp);
+        self.player_sp = str_val;
+    }
+
+    pub fn get_str(&mut self) -> &u32 {
+        return &self.player_sp;
+    }
 }
 
 #[derive(Default, Component, Debug)]
