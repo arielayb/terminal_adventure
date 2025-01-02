@@ -1,9 +1,9 @@
+/*
+    Base module for the dice system.
+ */
+
 use dice::results::AllRollResults;
 use dice::dice::roll;
-use super::player::PlayerStr;
-use super::player::PlayerAgility;
-use super::player::PlayerCharm;
-use super::player::PlayerLuck;
 
 pub trait DiceRollEvent{
     fn roll_for_event(&mut self) -> &AllRollResults;
