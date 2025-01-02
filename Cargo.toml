@@ -16,6 +16,7 @@ opt-level = 3
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+array2d = "0.3.2"
 # NOTE: Remember to revert this before releasing your game! 
 # Otherwise you will need to include libbevy_dylib alongside your game if you want it to run. 
 # If you remove the "dynamic" feature, your game executable can run standalone.
@@ -24,6 +25,8 @@ bevy_aseprite = "0.12.0"
 bevy_ecs_ldtk = "0.10"
 bevy_text_popup = "0.4.0"
 dialogue_factory = { path = "dialogue_factory" } # from a path in the local filesystem
+dice-bag = "0.2.0"
+libudev-sys = "0.1.4"
 name_maker = "0.1.1"
 rand = "0.8.5"
 random_name_generator = "0.3.6"

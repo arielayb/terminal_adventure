@@ -1,6 +1,0 @@
-{
-    "git.ignoreLimitWarning": true,
-    "cmake.configureOnOpen": true,
-    "rust-analyzer.showUnlinkedFileNotification": false,
-    "rust-analyzer.checkOnSave": false
-}

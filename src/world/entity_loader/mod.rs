@@ -1,6 +1,10 @@
+/*
+    entity_loader module
+    This module focuses on loading the entities and setting up the small
+    components for NPCs and player modules.
+*/
 use crate::states::*;
-// use bevy::prelude::*;
-use bevy::{prelude::*, render::camera::ScalingMode};
+use bevy::prelude::*;
 use bevy::text::JustifyText;
 use bevy::audio::CpalSample;
 use bevy_text_popup::{TextPopupEvent, TextPopupPlugin, TextPopupButton, TextPopupTimeout, TextPopupLocation};
@@ -8,15 +12,14 @@ use bevy_ecs_ldtk::prelude::*;
 use rand::prelude::*;
 use std::collections::HashSet;
 use std::ops::Index;
-use std::{thread, time::Duration};
 use name_maker::RandomNameGenerator;
 use name_maker::Gender;
 
 mod npc;
 mod player;
-
-/// Camera lerp factor.
-const CAM_LERP_FACTOR: f32 = 2.;
+mod enemy;
+mod graph_system;
+mod dice_system;
 
 // Tag component used to tag entities added on the game screen
 #[derive(Component)]
@@ -49,7 +52,7 @@ impl Plugin for EntityLoader {
 }
 
 // setup the world and camera
-fn camera_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn camera_setup(mut commands: Commands) {
     //commands.spawn(Camera2dBundle::default());
     
     let mut camera = Camera2dBundle::default();
@@ -86,8 +89,7 @@ struct WallBundle {
     wall: Wall,
 }
 
-fn spawn_player(mut commands: Commands) 
-{
+fn spawn_player(mut commands: Commands) {
     // TODO: work on removing factory design pattern in next goal
     let temp_name = String::from("ariel");
     let temp_hp: u32 = 10;
@@ -105,8 +107,7 @@ fn spawn_player(mut commands: Commands)
     ).insert(player::PlayerEvents{interact: false});
 }
 
-fn spawn_npc(mut commands: Commands) 
-{
+fn spawn_npc(mut commands: Commands) {
     // TODO: work on design patterns for random NPC generator in next goal
     // get a range for the name
     //let rng = RNG::try_from(&Language::Fantasy).unwrap();
@@ -256,16 +257,16 @@ fn npc_interact(
     mut npc_name: Query<&npc::NpcName, With<npc::NpcName>>,
     mut npc_dialogue: Query<&npc::NpcDialogue, With<npc::NpcDialogue>>
 
-){
+) {
     if players
         .iter()
         .zip(npc_coords.iter())
         .any(|(player_grid_coords, npc_grid_coords)| player_grid_coords == npc_grid_coords)
     {
         info!("Npc collision detected...");
-        let mut rng = thread_rng();
+        //let mut rng = thread_rng();
         let touch = player_event.single_mut();
-        let n: usize = rng.gen_range(0..=4);
+        //let n: usize = rng.gen_range(0..=4);
 
         if touch.interact {
             info!("<<< NPC interaction >>>");
@@ -306,7 +307,14 @@ fn update_camera(
 // Tests for the abstract factory dialogue class
 #[cfg(test)]
 mod test{
+    use array2d::Array2D;
     use dialogue_factory::*;
+    use graph_system::*;
+    use super::graph_system;
+    use super::dice_system::*;
+    use dice::dice::roll;
+    use super::player::*;
+    use super::enemy::*;
 
     #[test]
     fn test_init_player_entity_factory(){
@@ -319,46 +327,357 @@ mod test{
         assert_eq!(&npc_name, &name);
     }
 
-    // #[test]
-    // fn test_init_npc_entity_factory(){
-    //     let entity_fact = EntityFactory {};
-    //     let npc_factory = AbstractEntityFactory::create_npc_entity(&entity_fact, String::from("Bob")); 
+    #[test]
+    fn test_gen_matrix (){
+        let mut graph_base = graph_system::AdjMatrixGraph{
+            num_vertices: 0,
+            directed: false,
+            matrix: Array2D::filled_with(0, 0, 0)
+        };
+
+        graph_base.gen_empty_matrix(5);
+        assert_eq!(graph_base.num_vertices, 5);
+        assert_ne!(graph_base.matrix, Array2D::filled_with(0, 0, 0));
+    }
+
+    #[test]
+    fn test_add_edge(){
+        let mut graph_base = graph_system::AdjMatrixGraph{
+            num_vertices: 5,
+            directed: false,
+            matrix: Array2D::filled_with(0, 0, 0),
+        };
+
+        graph_base.gen_empty_matrix(4);
+        graph_base.add_edge(0, 1, 5);
+        graph_base.add_edge(1, 2, 10);
+        graph_base.add_edge(2, 3, 14);
+        graph_base.add_edge(0, 2, 51);
+
+        assert_eq!(graph_base.get_edge_weight(0, 1).unwrap_or(&0), Some(5).as_ref().unwrap_or(&0));
+        assert_eq!(graph_base.get_adj_vertices(0), vec![1, 2]);
+        assert_eq!(graph_base.get_adj_vertices(2), vec![0, 1, 3]);
+        println!("what is edge weight? {:?}", graph_base.get_edge_weight(0, 1).unwrap_or(&0));
+        println!("what are the adj vertices for 0? {:?}", graph_base.get_adj_vertices(0));
+        println!("what are the adj vertices for 2? {:?}", graph_base.get_adj_vertices(2));
+
+    }
+
+    #[test]
+    fn test_num_of_vertices() { 
+        let mut graph_base = graph_system::AdjMatrixGraph{
+            num_vertices: 4,
+            directed: false,
+            matrix: Array2D::filled_with(0, 0, 0),
+        };
+
+        graph_base.gen_empty_matrix(4);
+        graph_base.add_edge(0, 1, 12);
+        graph_base.add_edge(1, 2, 11);
+        graph_base.add_edge(2, 3, 1);
+        graph_base.add_edge(1, 3, 5);
+        graph_base.add_edge(0, 2, 18);
+        graph_base.display();
+
+        assert_eq!(graph_base.num_of_vertices(), 4);
+    }
+
+    #[test]
+    fn test_get_edge_weight() {
+        let mut graph_base = graph_system::AdjMatrixGraph{
+            num_vertices: 4,
+            directed: false,
+            matrix: Array2D::filled_with(0, 0, 0),
+        };
+
+        graph_base.gen_empty_matrix(4);
+        graph_base.add_edge(0, 1, 12);
+        graph_base.add_edge(1, 2, 11);
+        graph_base.add_edge(2, 3, 1);
+        graph_base.add_edge(1, 3, 5);
+        graph_base.add_edge(0, 2, 18);
+
+        assert_eq!(graph_base.get_edge_weight(1, 2), Some(&11));
+        println!("{:?}", graph_base.get_edge_weight(1, 2).unwrap_or(&0));
+    }
+
+    #[test]
+    fn test_roll_result_from_struct() {
+        let dice = DiceEventSystem{
+            dice_event: roll("1d20"),
+        };
+
+        let result = &dice.dice_event;
+
+        assert_eq!(dice.dice_event.total, result.total);
+        assert_eq!(dice.dice_event.total as u32, result.total as u32);
+    }
+
+    #[test]
+    fn test_roll_for_event() {
+        let event_dice = DiceEventSystem{
+            dice_event: roll("1d20"),
+        };
+
+        let mut graph_base = graph_system::AdjMatrixGraph{
+            num_vertices: 0,
+            directed: false,
+            matrix: Array2D::filled_with(0, 0, 0),
+        };
+
+        graph_base.gen_empty_matrix(4);
+        graph_base.add_edge(0, 1, event_dice.dice_event.total as u32);
+        graph_base.add_edge(1, 2, event_dice.dice_event.total as u32);
+        graph_base.add_edge(2, 3, event_dice.dice_event.total as u32);
+        graph_base.add_edge(1, 3, event_dice.dice_event.total as u32);
+        graph_base.add_edge(0, 2, event_dice.dice_event.total as u32);
+
+        assert_eq!(graph_base.get_edge_weight(0, 1), Some(&(event_dice.dice_event.total as u32)));
+        assert_eq!(graph_base.get_edge_weight(1, 2), Some(&(event_dice.dice_event.total as u32)));
+        assert_eq!(graph_base.get_edge_weight(2, 3), Some(&(event_dice.dice_event.total as u32)));
+        assert_eq!(graph_base.get_edge_weight(1, 3), Some(&(event_dice.dice_event.total as u32)));
+        assert_eq!(graph_base.get_edge_weight(0, 2), Some(&(event_dice.dice_event.total as u32)));
+    
+        assert_eq!(graph_base.get_adj_vertices(0), vec![1, 2]);
+        assert_eq!(graph_base.get_adj_vertices(2), vec![0, 1, 3]);
+        println!("what are the adj vertices for 0? {:?}", graph_base.get_adj_vertices(0));
+        println!("what are the adj vertices for 2? {:?}", graph_base.get_adj_vertices(2));
+    }
+
+    #[test]
+    fn test_basic_roll_for_attack() {
+        let player_info = PlayerName{
+            player_name: String::from("Ariel")
+        };
+
+        let mut player_health = PlayerHealth{
+            player_hp: 25
+        };
+
+        let mut player_attack_dice = DiceAttackSystem{
+            dice_attack: roll("1d20"),
+        };
+
+        let enemy_info = EnemyName{
+            enemy_name: String::from("Mufaba")
+        };
+
+        let mut enemy_health = EnemyHealth{
+            enemy_hp: 25
+        };
+
+        let mut enemy_attck_dice = DiceAttackSystem{
+            dice_attack: roll("1d20"),
+        };
+
+        let attack_result = player_attack_dice.get_attack_roll().total;
+        let enemy_attack_result = enemy_attck_dice.get_attack_roll().total;
+
+        println!("what is the player attack result? {:?}", attack_result);
+        println!("get the enemy attack result, {:?}", enemy_attack_result);
+
+        // losing hp from attack dice roll
+        let player_hp_attacked_result = player_health.player_hp as isize - enemy_attack_result;
+        let enemy_hp_attacked_result = enemy_health.enemy_hp as isize - attack_result;
+
+        player_health.player_hp = player_hp_attacked_result as u32;
+        enemy_health.enemy_hp = enemy_hp_attacked_result as u32;
+
+        println!("the player hp result: {:?}", player_hp_attacked_result); 
+        println!("the enemy hp result: {:?}", enemy_hp_attacked_result); 
+
+        assert_ne!(attack_result, 0);
+        assert_ne!(enemy_attack_result, 0);
+        assert_eq!(player_info.player_name, String::from("Ariel"));
+        assert_eq!(enemy_info.enemy_name, String::from("Mufaba"));
+        assert_eq!(player_health.player_hp as isize, player_hp_attacked_result);
+        assert_eq!(enemy_health.enemy_hp as isize, enemy_hp_attacked_result);
+    }
+
+    #[test]
+    fn test_basic_roll_for_agility() {
+        let player_info = PlayerName{
+            player_name: String::from("Ariel")
+        };
+
+        let mut player_health = PlayerHealth{
+            player_hp: 25
+        };
+
+        let mut player_attack_dice = DiceAttackSystem{
+            dice_attack: roll("1d20"),
+        };
+
+        let mut player_agility_dice = DiceAgilitySystem{
+            dice_agility: roll("1d20"),
+        };
+
+        let enemy_info = EnemyName{
+            enemy_name: String::from("Mufaba")
+        };
+
+        let mut enemy_health = EnemyHealth{
+            enemy_hp: 25
+        };
+
+        let mut enemy_attck_dice = DiceAttackSystem{
+            dice_attack: roll("1d20"),
+        };
+
+        let mut enemy_agility_dice = DiceAgilitySystem{
+            dice_agility: roll("1d20"),
+        };
+
+        // get the attack roll result from the dice
+        let attack_result = player_attack_dice.get_attack_roll().total;
+        let enemy_attack_result = enemy_attck_dice.get_attack_roll().total;
+
+        // get the agility roll result from the dice
+        let agility_result = player_agility_dice.get_agility_roll().total + 100;
+        let enemy_agility_result = enemy_agility_dice.get_agility_roll().total + 100;
+
+        println!("what is the player attack result? {:?}", attack_result);
+        println!("get the enemy attack result, {:?}", enemy_attack_result);
+
+        println!("what is the player agility result? {:?}", agility_result);
+        println!("get the enemy agility result, {:?}", enemy_agility_result);
+
+        let player_hp_attacked_result;
+        // guard for enemy atk is more than player agi 
+        if enemy_attack_result > agility_result {
+            // losing hp from the enemy attack dice roll
+            player_hp_attacked_result = player_health.player_hp as isize - enemy_attack_result;
+        } else {
+            // no result. The enemy's attack missed the player.
+            player_hp_attacked_result = 0;
+        }
         
-    //     let npc = npc_factory.npc_entity(String::from("Bob"), 10);
-    //     // let npc = npc_factory.npc_entity(String::from("npc1"));
-    //     // let enemey = enemy_factory.enemy_entity(String::from("enemy1"));
+        let enemy_hp_attacked_result;
+        if attack_result > enemy_agility_result {
+            // losing hp from the player attack dice roll
+            enemy_hp_attacked_result = enemy_health.enemy_hp as isize - attack_result;
+        } else {
+            // no result. The player's attack missed the enemy.
+            enemy_hp_attacked_result = 0;
+        }
 
-    //     let npc_ent = NpcEntity{name: String::from("Bob"), health: 10};
+        player_health.player_hp = player_hp_attacked_result as u32;
+        enemy_health.enemy_hp = enemy_hp_attacked_result as u32;
 
-    //     assert_eq!(&npc.name, &npc_ent.name);
-    //     assert_eq!(&npc.health, &npc_ent.health);
-    // }
+        println!("the player hp result: {:?}", player_hp_attacked_result); 
+        println!("the enemy hp result: {:?}", enemy_hp_attacked_result); 
 
-    // #[test]
-    // fn test_init_player_entity_factory(){
-    //     let entity_fact = EntityFactory {};
-    //     let player_factory = AbstractEntityFactory::create_player_entity(&entity_fact, String::from("ariel")); 
+        assert_ne!(attack_result, 0);
+        assert_ne!(enemy_attack_result, 0);
+        assert_eq!(player_hp_attacked_result, 0);
+        assert_eq!(enemy_hp_attacked_result, 0);
+        assert_ne!(agility_result, 0);
+        assert_ne!(enemy_agility_result, 0);
+        assert_eq!(player_info.player_name, String::from("Ariel"));
+        assert_eq!(enemy_info.enemy_name, String::from("Mufaba"));
+        assert_eq!(player_health.player_hp as isize, player_hp_attacked_result);
+        assert_eq!(enemy_health.enemy_hp as isize, enemy_hp_attacked_result);
+    }
+
+    #[test]
+    fn test_basic_roll_for_defense() {
+        let mut player_health = PlayerHealth{
+            player_hp: 25
+        };
+
+        let mut player_defense_equip = PlayerDef{
+            equip_defense_val: 10,
+        };
+
+        let mut enemy_attck_dice = DiceAttackSystem{
+            dice_attack: roll("1d20"),
+        };
+
+        // get the attack roll result from the dice
+        let enemy_attack_result = enemy_attck_dice.get_attack_roll().total;
+
+        // get the agility roll result from the dice
+        player_defense_equip.set_defense_equip(5);
+        let player_defense_result = player_defense_equip.get_defense_equip();
+
+        println!("get the enemy attack result, {:?}", enemy_attack_result);
+
+        println!("what is the player defense result? {:?}", player_defense_result);
+
+        let player_hp_attacked_result;
+        // guard for enemy atk with an equip 
+        if *player_defense_result == 0 {
+            // losing hp from the enemy attack dice roll
+            player_hp_attacked_result = player_health.player_hp as isize - enemy_attack_result;
+        } else {
+            // the player's health is protected by the defense equip.
+            player_hp_attacked_result = player_health.player_hp as isize + *player_defense_result as isize - enemy_attack_result;
+        }
         
-    //     let player = player_factory.player_entity(String::from("ariel"), 10, 5);
-    //     let player_ent = PlayerEntity{name: String::from("ariel"), health: 10, tech: 5};
+        player_health.player_hp = player_hp_attacked_result as u32;
 
-    //     assert_eq!(&player.name, &player_ent.name);
-    //     assert_eq!(&player.health, &player_ent.health);
-    //     assert_eq!(&player.tech, &player_ent.tech);
-    // }
+        println!("the player hp result: {:?}", player_hp_attacked_result); 
 
-    // #[test]
-    // fn test_init_npc_entity_factory(){
-    //     let entity_fact = EntityFactory {};
-    //     let npc_factory = AbstractEntityFactory::create_npc_entity(&entity_fact, String::from("Bob")); 
+        assert_ne!(player_hp_attacked_result, 0);
+        assert_ne!(enemy_attack_result, 0);
+        assert_eq!(player_hp_attacked_result, player_health.player_hp as isize);
+        assert_eq!(*player_defense_result, 5);
+        assert_eq!(player_health.player_hp as isize, player_hp_attacked_result);
+    }
+
+    #[test]
+    fn test_basic_roll_for_tech() {
+        let player_info = PlayerName{
+            player_name: String::from("Ariel")
+        };
+
+        let mut player_tech_dice = DiceTechSystem{
+            dice_tech: roll("1d20"),
+        };
+
+        let tech_result = player_tech_dice.get_tech_roll().total;
+
+        println!("what is the player attack result? {:?}", tech_result);
+
+        let ration_machine_tech_def = 0;
+        let player_tech_result;
+        // guard for enemy atk is more than player agi 
+        if tech_result > ration_machine_tech_def {
+            // hacked a machine using hack tech
+            player_tech_result =  String::from("ration machine hacked!");
+        } else {
+            // hack tech failed
+            player_tech_result = String::from("tech failed!");
+        }
         
-    //     let npc = npc_factory.npc_entity(String::from("Bob"), 10);
-    //     // let npc = npc_factory.npc_entity(String::from("npc1"));
-    //     // let enemey = enemy_factory.enemy_entity(String::from("enemy1"));
+        println!("the player tech result: {:?}", player_tech_result); 
 
-    //     let npc_ent = NpcEntity{name: String::from("Bob"), health: 10};
+        assert_eq!(player_tech_result, "ration machine hacked!");
+        assert_eq!(player_info.player_name, String::from("Ariel"));
+    }
 
-    //     assert_eq!(&npc.name, &npc_ent.name);
-    //     assert_eq!(&npc.health, &npc_ent.health);
-    // }
+    #[test]
+    fn test_set_and_get_player_name() {
+        let player_info = PlayerName{
+            player_name: String::from("Ariel")
+        };
+
+        let name = player_info.get_player_name();
+
+        println!("{:?}", name);
+
+        assert_eq!(name, String::from("Ariel"));
+
+        let mut player_set_info = PlayerName{
+            player_name: String::from("None")
+        };
+
+        player_set_info.set_player_name(String::from("Bob"));
+
+        let get_name = player_set_info.get_player_name();
+        
+        println!("{:?}", get_name);
+        assert_eq!(get_name, String::from("Bob"));
+    }
 }
+
