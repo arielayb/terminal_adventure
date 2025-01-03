@@ -5,6 +5,7 @@
 */
 use crate::states::*;
 use bevy::prelude::*;
+use bevy::core_pipeline::bloom::BloomSettings;
 use bevy::text::JustifyText;
 use bevy::audio::CpalSample;
 use bevy_text_popup::{TextPopupEvent, TextPopupPlugin, TextPopupButton, TextPopupTimeout, TextPopupLocation};
@@ -700,4 +701,3 @@ mod test{
         assert_eq!(get_name, String::from("Bob"));
     }
 }
-

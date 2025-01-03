@@ -1,7 +1,6 @@
 use crate::states::*;
 use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
-use bevy::core_pipeline::bloom::BloomSettings;
 
 mod entity_loader;
 
