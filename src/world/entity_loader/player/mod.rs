@@ -61,9 +61,31 @@ pub struct PlayerCharm{
     pub player_charm: u32
 }
 
+impl PlayerCharm {
+    pub fn set_charm(&mut self, charm_val: u32) {
+        println!("Charm value, {:?}", &self.player_charm);
+        self.player_charm = charm_val;
+    }
+
+    pub fn get_charm(&mut self) -> &u32 {
+        return &self.player_charm;
+    }
+}
+
 #[derive(Default, Component, Debug)]
 pub struct PlayerAgility{
     pub player_ap: u32
+}
+
+impl PlayerAgility {
+    pub fn set_agi(&mut self, agi_val: u32) {
+        println!("Agility value, {:?}", &self.player_ap);
+        self.player_ap = agi_val;
+    }
+
+    pub fn get_agi(&mut self) -> &u32 {
+        return &self.player_ap;
+    }
 }
 
 #[derive(Default, Component, Debug)]
