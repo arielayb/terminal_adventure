@@ -20,6 +20,7 @@ mod player;
 mod enemy;
 mod graph_system;
 mod dice_system;
+mod player_dice_system;
 
 // Tag component used to tag entities added on the game screen
 #[derive(Component)]

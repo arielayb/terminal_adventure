@@ -1,7 +1,6 @@
 /*
     Base module for the dice system.
  */
-
 use dice::results::AllRollResults;
 use dice::dice::roll;
 
@@ -30,11 +29,6 @@ pub trait DiceRollCharm{
     fn get_charm_roll(&mut self) -> &AllRollResults;
 }
 
-pub trait DiceRollStrength{
-    fn roll_for_strength(&mut self) -> &AllRollResults;
-    fn get_strength_roll(&mut self) -> &AllRollResults;
-}
-
 pub trait DiceRollDark{
     fn roll_for_dark(&mut self) -> &AllRollResults;
     fn get_dark_roll(&mut self) -> &AllRollResults;
@@ -48,10 +42,6 @@ pub struct DiceAttackSystem{
     pub dice_attack: AllRollResults,
 }
 
-pub struct DiceDefenseSystem {
-    pub equip_defense_val: u32,
-}
-
 pub struct DiceTechSystem{
     pub dice_tech: AllRollResults,
 }
@@ -62,10 +52,6 @@ pub struct DiceAgilitySystem{
 
 pub struct DiceCharmSystem{
     pub dice_charm: AllRollResults,
-}
-
-pub struct DiceStrengthSystem{
-    pub dice_strength: AllRollResults,
 }
 
 pub struct DiceDarkSystem{
@@ -139,20 +125,6 @@ impl DiceRollCharm for DiceCharmSystem{
 
     fn get_charm_roll(&mut self) -> &AllRollResults {
         return &self.dice_charm;
-    }
-}
-
-impl DiceRollStrength for DiceStrengthSystem{
-    fn roll_for_strength(&mut self) -> &AllRollResults {
-        self.dice_strength = roll("1d20");
-    
-        println!("Strength roll, {:?}", &self.dice_strength.total);
-    
-        return &self.dice_strength;
-    }
-
-    fn get_strength_roll(&mut self) -> &AllRollResults {
-        return &self.dice_strength;
     }
 }
 
