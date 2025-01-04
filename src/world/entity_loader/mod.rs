@@ -94,7 +94,6 @@ struct WallBundle {
 }
 
 fn spawn_player(mut commands: Commands) {
-    // TODO: work on removing factory design pattern in next goal
     let temp_name = String::from("ariel");
     let temp_hp: u32 = 10;
     let temp_tp: u32 = 5;
