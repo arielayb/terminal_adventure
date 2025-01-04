@@ -1,25 +1,29 @@
 /*
     entity_loader module
-    This module focuses on loading the entities and setting up the small
+    This module focuses on loading the entities and setting up
     components for NPCs and player modules.
 */
 use crate::states::*;
 use bevy::prelude::*;
+use bevy::core_pipeline::bloom::BloomSettings;
 use bevy::text::JustifyText;
 use bevy::audio::CpalSample;
 use bevy_text_popup::{TextPopupEvent, TextPopupPlugin, TextPopupButton, TextPopupTimeout, TextPopupLocation};
 use bevy_ecs_ldtk::prelude::*;
+use player::PlayerDef;
 use rand::prelude::*;
 use std::collections::HashSet;
 use std::ops::Index;
 use name_maker::RandomNameGenerator;
 use name_maker::Gender;
 
+// import other modules
 mod npc;
 mod player;
 mod enemy;
 mod graph_system;
 mod dice_system;
+mod player_dice_system;
 
 // Tag component used to tag entities added on the game screen
 #[derive(Component)]
@@ -90,10 +94,14 @@ struct WallBundle {
 }
 
 fn spawn_player(mut commands: Commands) {
-    // TODO: work on removing factory design pattern in next goal
     let temp_name = String::from("ariel");
     let temp_hp: u32 = 10;
-    // let temp_tp: u32 = 5;
+    let temp_tp: u32 = 5;
+    let temp_ag: u32 = 3;
+    let temp_df: u32 = 5;
+    let temp_ch: u32 = 2;
+    let temp_lp: u32 = 1;
+    let temp_st: u32 = 5;
 
     commands.spawn(
         (player::PlayerBundle {
@@ -103,6 +111,18 @@ fn spawn_player(mut commands: Commands) {
             player_name: temp_name 
         },player::PlayerHealth{
             player_hp: temp_hp
+        },player::PlayerAgility{
+          player_ap: temp_ag  
+        },player::PlayerDef{
+            equip_defense_val: temp_df
+        },player::PlayerCharm{
+            player_charm: temp_ch 
+        },player::PlayerLuck{
+            player_lp: temp_lp
+        },player::PlayerTech{
+            player_tp: temp_tp
+        },player::PlayerStr{
+            player_sp: temp_st
         })
     ).insert(player::PlayerEvents{interact: false});
 }
@@ -680,4 +700,3 @@ mod test{
         assert_eq!(get_name, String::from("Bob"));
     }
 }
-
