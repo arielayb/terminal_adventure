@@ -1,6 +1,10 @@
 use crate::states::*;
 use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
+use bevy_quickmenu::{
+    style::Stylesheet, ActionTrait, Menu, MenuIcon, MenuItem, MenuState, QuickMenuPlugin,
+    ScreenTrait,
+};
 
 mod entity_loader;
 

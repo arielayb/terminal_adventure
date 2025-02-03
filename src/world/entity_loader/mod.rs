@@ -8,6 +8,7 @@ use bevy::prelude::*;
 use bevy::core_pipeline::bloom::BloomSettings;
 use bevy::text::JustifyText;
 use bevy::audio::CpalSample;
+use bevy::time;
 use bevy_text_popup::{TextPopupEvent, TextPopupPlugin, TextPopupButton, TextPopupTimeout, TextPopupLocation};
 use bevy_ecs_ldtk::prelude::*;
 use player::PlayerDef;
@@ -336,6 +337,7 @@ mod test{
     use dice::dice::roll;
     use super::player::*;
     use super::enemy::*;
+    use super::player_dice_system::*;
 
     #[test]
     fn test_init_player_entity_factory(){
@@ -549,11 +551,11 @@ mod test{
             dice_agility: roll("1d20"),
         };
 
-        // get the attack roll result from the dice
+        // get the attack roll result from the dice with an additonal 100p bonus
         let attack_result = player_attack_dice.get_attack_roll().total;
         let enemy_attack_result = enemy_attck_dice.get_attack_roll().total;
 
-        // get the agility roll result from the dice
+        // get the agility roll result from the dice with an addtional 100p bonus
         let agility_result = player_agility_dice.get_agility_roll().total + 100;
         let enemy_agility_result = enemy_agility_dice.get_agility_roll().total + 100;
 
