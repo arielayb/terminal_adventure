@@ -1,6 +1,7 @@
 use crate::states::*;
 use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
+
 mod entity_loader;
 
 // Tag component used to tag entities added on the game screen
