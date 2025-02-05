@@ -1,3 +1,6 @@
+/*
+This module setup the world  loads major modules
+*/
 use crate::states::*;
 use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
