@@ -353,7 +353,48 @@ fn npc_interact(
     }
 }
 
-/// Update the camera position by tracking the player.
+fn enemy_interact(
+    asset_server: Res<AssetServer>,
+    players: Query<&GridCoords, With<player::Player>>,
+    // mut text_popup_events: EventWriter<TextPopupEvent>,
+    mut player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
+    enemy_coords: Query<&GridCoords, With<enemy::Enemy>>,
+    // mut npc_name: Query<&npc::NpcName, With<npc::NpcName>>,
+    // mut npc_dialogue: Query<&npc::NpcDialogue, With<npc::NpcDialogue>>,
+) {
+    if players
+        .iter()
+        .zip(enemy_coords.iter())
+        .any(|(player_grid_coords, enemy_grid_coords)| player_grid_coords == enemy_grid_coords)
+    {
+        info!("Npc collision detected...");
+        //let mut rng = thread_rng();
+        let touch = player_event.single_mut();
+        //let n: usize = rng.gen_range(0..=4);
+
+        if touch.interact {
+            info!("<<< NPC interaction >>>");
+            // println!("{}", npc.single_mut().1.clone().get_npc_name());
+            // text_popup_events.send(TextPopupEvent {
+            //     content: format!(
+            //         "{} : \n{}",
+            //         npc_name.single_mut().npc_name.to_string(),
+            //         npc_dialogue.single_mut().dialogue
+            //     ),
+            //     font: Some(asset_server.load("fonts/Fortine-Regular.otf")),
+            //     font_size: 20.,
+            //     location: TextPopupLocation::Bottom,
+            //     text_alignment: JustifyText::Left,
+            //     border_color: Color::linear_rgb(100., 100., 100.),
+            //     modal: Some(Color::linear_rgba(0., 0., 0., 0.)),
+            //     timeout: TextPopupTimeout::Seconds(5),
+            //     ..default()
+            // });
+        }
+    }
+}
+
+// Update the camera position by tracking the player.
 fn update_camera(
     mut camera: Query<&mut Transform, (With<Camera2d>, Without<player::Player>)>,
     player: Query<&mut GridCoords, With<player::Player>>,

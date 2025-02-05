@@ -11,7 +11,7 @@
 	"iid": "a0dafc00-fec0-11ee-86a0-9b3fbf3a6199",
 	"jsonVersion": "1.5.3",
 	"appBuildId": 473703,
-	"nextUid": 84,
+	"nextUid": 87,
 	"identifierStyle": "Capitalize",
 	"toc": [],
 	"worldLayout": "LinearHorizontal",
@@ -810,6 +810,41 @@
 			"pivotX": 0,
 			"pivotY": 0,
 			"fieldDefs": []
+		},
+		{
+			"identifier": "Enemy",
+			"uid": 84,
+			"tags": ["Enemy"],
+			"exportToToc": false,
+			"allowOutOfBounds": false,
+			"doc": null,
+			"width": 16,
+			"height": 16,
+			"resizableX": false,
+			"resizableY": false,
+			"minWidth": null,
+			"maxWidth": null,
+			"minHeight": null,
+			"maxHeight": null,
+			"keepAspectRatio": false,
+			"tileOpacity": 1,
+			"fillOpacity": 0.08,
+			"lineOpacity": 0,
+			"hollow": false,
+			"color": "#733E39",
+			"renderMode": "Tile",
+			"showName": true,
+			"tilesetId": 86,
+			"tileRenderMode": "FitInside",
+			"tileRect": { "tilesetUid": 86, "x": 352, "y": 128, "w": 32, "h": 32 },
+			"uiTileRect": null,
+			"nineSliceBorders": [],
+			"maxCount": 0,
+			"limitScope": "PerLevel",
+			"limitBehavior": "MoveLastOne",
+			"pivotX": 0,
+			"pivotY": 0,
+			"fieldDefs": []
 		}
 	], "tilesets": [
 		{
@@ -895,6 +930,28 @@
 			"cachedPixelData": {
 				"opaqueTiles": "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
 				"averageColors": "3fff3fff3fff3fff3fff3fff3eee3eee3eee3eee3fff3fff3fff3fff3fff3fff3fff3fff3eee3eee3eee3eee3fff3fff3fff3fff3fff3fff3fff3fff3eee3eee3eee3eee3fff3fff3fff3fff3fff3fff3fff3fff3fff3fff3fff3fff3fff3fff2fff2fff2fff3eee3eee3eee3eee4eee4eee3fff3fff3fff2fff2fff2fff3eee3eee3eee3eee3eee3eee3fff3fff3fff2fff2fff2fff3eee3eee3eee3eee3eee3eee3fff3fff3fff2fff2fff2fff3fff3fff3fff3fff4fff4fff3fff3fff3fff"
+			}
+		},
+		{
+			"__cWid": 12,
+			"__cHei": 8,
+			"identifier": "Enemies",
+			"uid": 86,
+			"relPath": "workers/workers2.png",
+			"embedAtlas": null,
+			"pxWid": 384,
+			"pxHei": 256,
+			"tileGridSize": 32,
+			"spacing": 0,
+			"padding": 0,
+			"tags": [],
+			"tagsSourceEnumUid": null,
+			"enumTags": [],
+			"customData": [],
+			"savedSelections": [],
+			"cachedPixelData": {
+				"opaqueTiles": "111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111",
+				"averageColors": "f777f777f777f777f777f777f666f666f666f666f666f666f666f777f777f777f777f777f666f666f666f666f666f666f666f777f777f777f777f777f666f666f666f666f666f666f777f777f777f777f777f888f666f666f666f666f666f666f666f666f666f777f777f777f666f666f666f511f511f511f666f666f666f777f777f777f666f666f666f511f511f511f666f666f666f777f777f777f666f666f666f511f511f511f777f777f777f777f777f777f666f666f666f511f511f511"
 			}
 		}
 	], "enums": [], "externalEnums": [], "levelFields": [] },
@@ -984,6 +1041,20 @@
 							"height": 16,
 							"defUid": 82,
 							"px": [624,192],
+							"fieldInstances": []
+						},
+						{
+							"__identifier": "Enemy",
+							"__grid": [24,16],
+							"__pivot": [0,0],
+							"__tags": ["Enemy"],
+							"__tile": { "tilesetUid": 86, "x": 352, "y": 128, "w": 32, "h": 32 },
+							"__smartColor": "#733E39",
+							"iid": "0c864f00-c210-11ef-aec3-e387b6dc9bf0",
+							"width": 16,
+							"height": 16,
+							"defUid": 84,
+							"px": [384,256],
 							"fieldInstances": []
 						}
 					]
