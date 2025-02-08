@@ -124,6 +124,7 @@ fn spawn_player(mut commands: Commands) {
                 player_name: temp_name,
             },
             player::PlayerHealth { player_hp: temp_hp },
+            player::PlayerHealth { player_hp: temp_hp },
             player::PlayerAgility { player_ap: temp_ag },
             player::PlayerDef {
                 equip_defense_val: temp_df,
@@ -169,7 +170,7 @@ fn spawn_npc(mut commands: Commands) {
 fn spawn_enemy(mut commands: Commands) {
     // TODO: work on design patterns for random NPC generator in next goal
     // get a range for the name
-    //let rng = RNG::try_from(&Language::Fantasy).unwrap();
+    // let rng = RNG::try_from(&Language::Fantasy).unwrap();
     let rng = RandomNameGenerator::init();
 
     // Prints a random name with a masculine first name.
@@ -194,9 +195,9 @@ fn spawn_enemy(mut commands: Commands) {
         enemy::EnemyName {
             enemy_name: first_name,
         },
-        // enemy::E {
-        //     dialogue: arr_dialogue[i].to_string(),
-        // },
+        enemy::EnemyDialogue {
+            dialogue: arr_dialogue[i].to_string(),
+        },
     ));
 }
 
@@ -266,6 +267,32 @@ fn move_npc(
             let destination = *npc_grid_coords + movement_direction;
             if !level_walls.in_wall(&destination) {
                 *npc_grid_coords = destination;
+            }
+        }
+    }
+}
+
+fn move_enemy(
+    time: Res<Time>,
+    mut enemy: Query<&mut GridCoords, With<enemy::Enemy>>,
+    mut enemy_timer: ResMut<enemy::EnemyWalkConfig>,
+    level_walls: Res<LevelWalls>,
+) {
+    let mut rng = thread_rng();
+
+    let x: i32 = rng.gen_range(-1..=1);
+    let y: i32 = rng.gen_range(-1..=1);
+
+    // tick the timer
+    enemy_timer.walk_timer.tick(time.delta());
+
+    let movement_direction = GridCoords::new(x, y);
+
+    for mut enemy_grid_coords in enemy.iter_mut() {
+        if enemy_timer.walk_timer.finished() {
+            let destination = *enemy_grid_coords + movement_direction;
+            if !level_walls.in_wall(&destination) {
+                *enemy_grid_coords = destination;
             }
         }
     }
@@ -358,9 +385,10 @@ fn enemy_interact(
     players: Query<&GridCoords, With<player::Player>>,
     // mut text_popup_events: EventWriter<TextPopupEvent>,
     mut player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
+    mut player_pos: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
     enemy_coords: Query<&GridCoords, With<enemy::Enemy>>,
     // mut npc_name: Query<&npc::NpcName, With<npc::NpcName>>,
-    // mut npc_dialogue: Query<&npc::NpcDialogue, With<npc::NpcDialogue>>,
+    mut enemy_dialogue: Query<&enemy::EnemyDialogue, With<enemy::EnemyDialogue>>,
 ) {
     if players
         .iter()
@@ -370,10 +398,12 @@ fn enemy_interact(
         info!("Npc collision detected...");
         //let mut rng = thread_rng();
         let touch = player_event.single_mut();
+        let player_move = player_pos.single_mut();
         //let n: usize = rng.gen_range(0..=4);
 
-        if touch.interact {
-            info!("<<< NPC interaction >>>");
+        if touch.attack_enemy {
+            info!("<<< Enemy interaction >>>");
+
             // println!("{}", npc.single_mut().1.clone().get_npc_name());
             // text_popup_events.send(TextPopupEvent {
             //     content: format!(
