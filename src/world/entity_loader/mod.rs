@@ -45,17 +45,20 @@ impl Plugin for EntityLoader {
             (camera_setup, spawn_player, spawn_npc, spawn_enemy),
         )
         .register_ldtk_entity::<npc::NpcBundle>("NPC")
+        .register_ldtk_entity::<enemy::EnemyBundle>("Enemy")
         .register_ldtk_entity::<player::PlayerBundle>("Player")
         .register_ldtk_int_cell_for_layer::<WallBundle>("Walls", 1)
         .register_ldtk_int_cell_for_layer::<WallBundle>("Water", 1)
         .init_resource::<LevelWalls>()
         .init_resource::<npc::NpcWalkConfig>()
+        .init_resource::<enemy::EnemyWalkConfig>()
         .add_plugins(TextPopupPlugin)
         .add_systems(
             Update,
             (
                 player_control,
                 move_npc,
+                move_enemy,
                 translate_grid_coords_entities,
                 cache_wall_locations,
                 npc_interact,
@@ -124,7 +127,6 @@ fn spawn_player(mut commands: Commands) {
                 player_name: temp_name,
             },
             player::PlayerHealth { player_hp: temp_hp },
-            player::PlayerHealth { player_hp: temp_hp },
             player::PlayerAgility { player_ap: temp_ag },
             player::PlayerDef {
                 equip_defense_val: temp_df,
@@ -136,7 +138,10 @@ fn spawn_player(mut commands: Commands) {
             player::PlayerTech { player_tp: temp_tp },
             player::PlayerStr { player_sp: temp_st },
         ))
-        .insert(player::PlayerEvents { interact: false });
+        .insert(player::PlayerEvents {
+            interact: false,
+            attack_enemy: false,
+        });
 }
 
 fn spawn_npc(mut commands: Commands) {
@@ -274,14 +279,19 @@ fn move_npc(
 
 fn move_enemy(
     time: Res<Time>,
+    mut player: Query<&mut GridCoords, With<player::Player>>,
     mut enemy: Query<&mut GridCoords, With<enemy::Enemy>>,
     mut enemy_timer: ResMut<enemy::EnemyWalkConfig>,
     level_walls: Res<LevelWalls>,
 ) {
     let mut rng = thread_rng();
-
     let x: i32 = rng.gen_range(-1..=1);
     let y: i32 = rng.gen_range(-1..=1);
+    // let player_x: i32 = player.single_mut().x;
+    // let player_y: i32 = player.single_mut().y;
+
+    // let enemy_x: i32 = player_x - enemy.single_mut().x;
+    // let enemy_y: i32 = player_y - enemy.single_mut().y;
 
     // tick the timer
     enemy_timer.walk_timer.tick(time.delta());
@@ -449,7 +459,6 @@ mod test {
     use super::enemy::*;
     use super::graph_system;
     use super::player::*;
-    use super::player_dice_system::*;
     use array2d::Array2D;
     use dialogue_factory::*;
     use dice::dice::roll;
