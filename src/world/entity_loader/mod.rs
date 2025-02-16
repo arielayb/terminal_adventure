@@ -9,13 +9,17 @@ use bevy::core_pipeline::bloom::BloomSettings;
 use bevy::prelude::*;
 use bevy::text::JustifyText;
 use bevy::time;
+use bevy::utils::tracing::field::debug;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_text_popup::{
     TextPopupButton, TextPopupEvent, TextPopupLocation, TextPopupPlugin, TextPopupTimeout,
 };
 use name_maker::Gender;
 use name_maker::RandomNameGenerator;
+use player::Player;
+use player::PlayerBundle;
 use player::PlayerDef;
+use player::PlayerPosition;
 use rand::prelude::*;
 use std::collections::HashSet;
 use std::ops::Index;
@@ -117,6 +121,10 @@ fn spawn_player(mut commands: Commands) {
     let temp_lp: u32 = 1;
     let temp_st: u32 = 5;
 
+    // let player_setup = player::PlayerPosition {
+    //     player_position: GridCoords::new(15, 11),
+    // };
+
     commands
         .spawn((
             player::PlayerBundle {
@@ -138,10 +146,15 @@ fn spawn_player(mut commands: Commands) {
             player::PlayerTech { player_tp: temp_tp },
             player::PlayerStr { player_sp: temp_st },
         ))
-        .insert(player::PlayerEvents {
-            interact: false,
-            attack_enemy: false,
-        });
+        .insert((
+            player::PlayerEvents {
+                interact: false,
+                attack_enemy: false,
+            },
+            player::PlayerPosition {
+                player_position: GridCoords::new(15, 11),
+            },
+        ));
 }
 
 fn spawn_npc(mut commands: Commands) {
@@ -192,6 +205,11 @@ fn spawn_enemy(mut commands: Commands) {
     let mut rng = thread_rng();
     let i: usize = rng.gen_range(0..=4);
 
+    let mut player_grid = player::PlayerPosition {
+        ..Default::default()
+    };
+    let player_coors = player_grid.get_player_position();
+
     commands.spawn((
         enemy::EnemyBundle {
             enemy_entity: enemy::Enemy,
@@ -202,6 +220,9 @@ fn spawn_enemy(mut commands: Commands) {
         },
         enemy::EnemyDialogue {
             dialogue: arr_dialogue[i].to_string(),
+        },
+        player::PlayerPosition {
+            player_position: player_coors,
         },
     ));
 }
@@ -279,30 +300,30 @@ fn move_npc(
 
 fn move_enemy(
     time: Res<Time>,
-    mut player: Query<&mut GridCoords, With<player::Player>>,
+    mut player: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
     mut enemy: Query<&mut GridCoords, With<enemy::Enemy>>,
     mut enemy_timer: ResMut<enemy::EnemyWalkConfig>,
     level_walls: Res<LevelWalls>,
 ) {
-    let mut rng = thread_rng();
-    let x: i32 = rng.gen_range(-1..=1);
-    let y: i32 = rng.gen_range(-1..=1);
-    // let player_x: i32 = player.single_mut().x;
-    // let player_y: i32 = player.single_mut().y;
-
     // let enemy_x: i32 = player_x - enemy.single_mut().x;
     // let enemy_y: i32 = player_y - enemy.single_mut().y;
 
     // tick the timer
     enemy_timer.walk_timer.tick(time.delta());
+    // let calc_direction = player_position.single_mut();
 
-    let movement_direction = GridCoords::new(x, y);
+    for player_pos in player.iter_mut() {
+        let movement_direction =
+            GridCoords::new(player_pos.player_position.x, player_pos.player_position.y);
+        println!("the player destination: {:?}", movement_direction);
 
-    for mut enemy_grid_coords in enemy.iter_mut() {
-        if enemy_timer.walk_timer.finished() {
-            let destination = *enemy_grid_coords + movement_direction;
-            if !level_walls.in_wall(&destination) {
-                *enemy_grid_coords = destination;
+        for mut enemy_grid_coords in enemy.iter_mut() {
+            if enemy_timer.walk_timer.finished() {
+                let destination = *enemy_grid_coords - movement_direction;
+                println!("the enemy destination: {:?}", destination);
+                if !level_walls.in_wall(&destination) {
+                    *enemy_grid_coords = destination;
+                }
             }
         }
     }

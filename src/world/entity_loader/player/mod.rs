@@ -9,8 +9,9 @@ pub struct PlayerName {
     pub player_name: String,
 }
 
-#[derive(Default, Component, Debug)]
+#[derive(Default, Component, LdtkEntity, Debug)]
 pub struct PlayerPosition {
+    #[grid_coords]
     pub player_position: GridCoords,
 }
 
