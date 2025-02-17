@@ -125,6 +125,11 @@ fn spawn_player(mut commands: Commands) {
     //     player_position: GridCoords::new(15, 11),
     // };
 
+    // let player_setup = Box<GridCoords>(GridCoords {
+    //     x: 15,
+    //     y: 11,
+    // });
+
     commands
         .spawn((
             player::PlayerBundle {
@@ -152,7 +157,7 @@ fn spawn_player(mut commands: Commands) {
                 attack_enemy: false,
             },
             player::PlayerPosition {
-                player_position: GridCoords::new(15, 11),
+                player_position: Box::new(GridCoords { x: 0, y: 0 }),
             },
         ));
 }
@@ -205,11 +210,6 @@ fn spawn_enemy(mut commands: Commands) {
     let mut rng = thread_rng();
     let i: usize = rng.gen_range(0..=4);
 
-    let mut player_grid = player::PlayerPosition {
-        ..Default::default()
-    };
-    let player_coors = player_grid.get_player_position();
-
     commands.spawn((
         enemy::EnemyBundle {
             enemy_entity: enemy::Enemy,
@@ -221,14 +221,12 @@ fn spawn_enemy(mut commands: Commands) {
         enemy::EnemyDialogue {
             dialogue: arr_dialogue[i].to_string(),
         },
-        player::PlayerPosition {
-            player_position: player_coors,
-        },
     ));
 }
 
 fn player_control(
     mut players: Query<&mut GridCoords, With<player::Player>>,
+    mut player_pos: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
     mut player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
     input: Res<ButtonInput<KeyCode>>,
     level_walls: Res<LevelWalls>,
@@ -264,8 +262,11 @@ fn player_control(
             return;
         };
 
+    let mut player_coords = player_pos.single_mut();
+
     for mut player_grid_coords in players.iter_mut() {
         let destination = *player_grid_coords + movement_direction;
+        *player_coords.player_position = destination;
         if !level_walls.in_wall(&destination) {
             *player_grid_coords = destination;
         }
@@ -300,7 +301,7 @@ fn move_npc(
 
 fn move_enemy(
     time: Res<Time>,
-    mut player: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
+    mut player_pos: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
     mut enemy: Query<&mut GridCoords, With<enemy::Enemy>>,
     mut enemy_timer: ResMut<enemy::EnemyWalkConfig>,
     level_walls: Res<LevelWalls>,
@@ -310,20 +311,23 @@ fn move_enemy(
 
     // tick the timer
     enemy_timer.walk_timer.tick(time.delta());
-    // let calc_direction = player_position.single_mut();
+    // let mut player_coords = player_pos.single_mut();
 
-    for player_pos in player.iter_mut() {
-        let movement_direction =
-            GridCoords::new(player_pos.player_position.x, player_pos.player_position.y);
-        println!("the player destination: {:?}", movement_direction);
+    let mut movement_direction = Box::new(GridCoords { x: 0, y: 0 });
+    for player_place in player_pos.iter_mut() {
+        *movement_direction = GridCoords {
+            x: player_place.player_position.x,
+            y: player_place.player_position.y,
+        }
+    }
 
-        for mut enemy_grid_coords in enemy.iter_mut() {
-            if enemy_timer.walk_timer.finished() {
-                let destination = *enemy_grid_coords - movement_direction;
-                println!("the enemy destination: {:?}", destination);
-                if !level_walls.in_wall(&destination) {
-                    *enemy_grid_coords = destination;
-                }
+    for mut enemy_grid_coords in enemy.iter_mut() {
+        if enemy_timer.walk_timer.finished() {
+            let destination = *enemy_grid_coords - *movement_direction;
+            println!("the player destination: {:?}", &movement_direction);
+            println!("the enemy destination: {:?}", &destination);
+            if !level_walls.in_wall(&destination) {
+                *enemy_grid_coords = destination;
             }
         }
     }

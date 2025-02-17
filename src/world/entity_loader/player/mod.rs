@@ -9,21 +9,20 @@ pub struct PlayerName {
     pub player_name: String,
 }
 
-#[derive(Default, Component, LdtkEntity, Debug)]
+#[derive(Default, Component, Debug)]
 pub struct PlayerPosition {
-    #[grid_coords]
-    pub player_position: GridCoords,
+    pub player_position: Box<GridCoords>,
 }
 
-impl PlayerPosition {
-    pub fn set_player_position(&mut self, player_position: GridCoords) {
-        self.player_position = player_position;
-    }
+// impl PlayerPosition {
+//     pub fn set_player_position(&mut self, player_position: Box<GridCoords>) {
+//         self.player_position = player_position;
+//     }
 
-    pub fn get_player_position(&mut self) -> GridCoords {
-        return self.player_position;
-    }
-}
+//     pub fn get_player_position(&mut self) -> Box<GridCoords> {
+//         return *self.player_position;
+//     }
+// }
 
 impl PlayerName {
     pub fn set_player_name(&mut self, name: String) {
