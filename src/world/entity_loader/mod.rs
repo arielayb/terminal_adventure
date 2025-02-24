@@ -333,6 +333,7 @@ fn move_enemy(
     }
 }
 
+// Load all entities
 fn translate_grid_coords_entities(
     mut grid_coords_entities: Query<(&mut Transform, &GridCoords), Changed<GridCoords>>,
 ) {
