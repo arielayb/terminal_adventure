@@ -7,6 +7,7 @@ use crate::states::*;
 use bevy::audio::CpalSample;
 use bevy::core_pipeline::bloom::BloomSettings;
 use bevy::prelude::*;
+use bevy::reflect::List;
 use bevy::text::JustifyText;
 use bevy::time;
 use bevy::utils::tracing::field::debug;
@@ -16,13 +17,11 @@ use bevy_text_popup::{
 };
 use name_maker::Gender;
 use name_maker::RandomNameGenerator;
-use player::Player;
-use player::PlayerBundle;
-use player::PlayerDef;
-use player::PlayerPosition;
 use rand::prelude::*;
 use std::collections::HashSet;
-use std::ops::Index;
+use std::collections::VecDeque;
+use std::thread::current;
+use std::vec;
 
 // import other modules
 mod dice_system;
@@ -53,7 +52,9 @@ impl Plugin for EntityLoader {
         .register_ldtk_entity::<player::PlayerBundle>("Player")
         .register_ldtk_int_cell_for_layer::<WallBundle>("Walls", 1)
         .register_ldtk_int_cell_for_layer::<WallBundle>("Water", 1)
+        .register_ldtk_int_cell_for_layer::<GroundBundle>("Ground", 1)
         .init_resource::<LevelWalls>()
+        .init_resource::<LevelGrounds>()
         .init_resource::<npc::NpcWalkConfig>()
         .init_resource::<enemy::EnemyWalkConfig>()
         .add_plugins(TextPopupPlugin)
@@ -65,6 +66,7 @@ impl Plugin for EntityLoader {
                 move_enemy,
                 translate_grid_coords_entities,
                 cache_wall_locations,
+                cache_ground_locations,
                 npc_interact,
                 update_camera,
             ),
@@ -103,12 +105,37 @@ impl LevelWalls {
     }
 }
 
+#[derive(Default, Resource)]
+struct LevelGrounds {
+    ground_locations: HashSet<GridCoords>,
+    level_width: i32,
+    level_height: i32,
+}
+
+impl LevelGrounds {
+    fn in_wall(&self, grid_coords: &GridCoords) -> bool {
+        grid_coords.x < 0
+            || grid_coords.y < 0
+            || grid_coords.x >= self.level_width
+            || grid_coords.y >= self.level_height
+            || self.ground_locations.contains(grid_coords)
+    }
+}
+
 #[derive(Default, Component)]
 struct Wall;
 
 #[derive(Default, Bundle, LdtkIntCell)]
 struct WallBundle {
     wall: Wall,
+}
+
+#[derive(Default, Component)]
+struct Ground;
+
+#[derive(Default, Bundle, LdtkIntCell)]
+struct GroundBundle {
+    ground: Ground,
 }
 
 fn spawn_player(mut commands: Commands) {
@@ -304,33 +331,53 @@ fn move_enemy(
     mut player_pos: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
     mut enemy: Query<&mut GridCoords, With<enemy::Enemy>>,
     mut enemy_timer: ResMut<enemy::EnemyWalkConfig>,
+    level_grounds: Res<LevelGrounds>,
     level_walls: Res<LevelWalls>,
 ) {
     // let enemy_x: i32 = player_x - enemy.single_mut().x;
     // let enemy_y: i32 = player_y - enemy.single_mut().y;
 
+    // initialize the frontier for the enemy
+    let mut frontier: VecDeque<GridCoords> = VecDeque::new();
+    frontier.push_back(GridCoords {
+        x: enemy.single_mut().x,
+        y: enemy.single_mut().y,
+    });
+
+    let mut reached: Vec<GridCoords> = Vec::new();
+    reached.push(GridCoords {
+        x: enemy.single_mut().x,
+        y: enemy.single_mut().y,
+    });
+
     // tick the timer
     enemy_timer.walk_timer.tick(time.delta());
     // let mut player_coords = player_pos.single_mut();
 
-    let mut movement_direction = Box::new(GridCoords { x: 0, y: 0 });
-    for player_place in player_pos.iter_mut() {
-        *movement_direction = GridCoords {
-            x: player_place.player_position.x,
-            y: player_place.player_position.y,
-        }
+    let mut index: usize = 0;
+    while !frontier.is_empty() {
+        let mut current = frontier.get_mut(index);
+        for next in level_grounds.ground_locations.iter() {}
     }
 
-    for mut enemy_grid_coords in enemy.iter_mut() {
-        if enemy_timer.walk_timer.finished() {
-            let destination = *enemy_grid_coords - *movement_direction;
-            println!("the player destination: {:?}", &movement_direction);
-            println!("the enemy destination: {:?}", &destination);
-            if !level_walls.in_wall(&destination) {
-                *enemy_grid_coords = destination;
-            }
-        }
-    }
+    // let mut movement_direction = Box::new(GridCoords { x: 0, y: 0 });
+    // for player_place in player_pos.iter_mut() {
+    //     *movement_direction = GridCoords {
+    //         x: player_place.player_position.x,
+    //         y: player_place.player_position.y,
+    //     }
+    // }
+
+    // for mut enemy_grid_coords in enemy.iter_mut() {
+    //     if enemy_timer.walk_timer.finished() {
+    //         let destination = *enemy_grid_coords - *movement_direction;
+    //         println!("the player destination: {:?}", &movement_direction);
+    //         println!("the enemy destination: {:?}", &destination);
+    //         if !level_walls.in_wall(&destination) {
+    //             *enemy_grid_coords = destination;
+    //         }
+    //     }
+    // }
 }
 
 // Load all entities
@@ -371,6 +418,36 @@ fn cache_wall_locations(
             };
 
             *level_walls = new_level_walls;
+        }
+    }
+}
+
+fn cache_ground_locations(
+    mut level_grounds: ResMut<LevelGrounds>,
+    mut level_events: EventReader<LevelEvent>,
+    grounds: Query<&GridCoords, With<Ground>>,
+    ldtk_project_entities: Query<&Handle<LdtkProject>>,
+    ldtk_project_assets: Res<Assets<LdtkProject>>,
+) {
+    const GRID_SIZE: i32 = 16;
+    for level_event in level_events.read() {
+        if let LevelEvent::Spawned(level_iid) = level_event {
+            let ldtk_project = ldtk_project_assets
+                .get(ldtk_project_entities.single())
+                .expect("LdtkProject should be loaded when level is spawned");
+            let level = ldtk_project
+                .get_raw_level_by_iid(level_iid.get())
+                .expect("spawned level should exist in project");
+
+            let ground_locations = grounds.iter().copied().collect();
+
+            let new_level_grounds = LevelGrounds {
+                ground_locations,
+                level_width: level.px_wid / GRID_SIZE,
+                level_height: level.px_hei / GRID_SIZE,
+            };
+
+            *level_grounds = new_level_grounds;
         }
     }
 }

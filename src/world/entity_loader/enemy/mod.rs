@@ -92,7 +92,7 @@ pub struct EnemyWalkConfig {
 impl EnemyWalkConfig {
     pub fn new() -> Self {
         Self {
-            walk_timer: Timer::from_seconds(2.0, TimerMode::Repeating),
+            walk_timer: Timer::from_seconds(1.0, TimerMode::Repeating),
         }
     }
 }
