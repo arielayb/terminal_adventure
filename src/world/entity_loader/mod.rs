@@ -17,6 +17,7 @@ use bevy_text_popup::{
 };
 use name_maker::Gender;
 use name_maker::RandomNameGenerator;
+use pathfinding::prelude::bfs;
 use rand::prelude::*;
 use std::collections::HashSet;
 use std::collections::VecDeque;
@@ -331,53 +332,62 @@ fn move_enemy(
     mut player_pos: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
     mut enemy: Query<&mut GridCoords, With<enemy::Enemy>>,
     mut enemy_timer: ResMut<enemy::EnemyWalkConfig>,
-    level_grounds: Res<LevelGrounds>,
     level_walls: Res<LevelWalls>,
 ) {
     // let enemy_x: i32 = player_x - enemy.single_mut().x;
     // let enemy_y: i32 = player_y - enemy.single_mut().y;
-
-    // initialize the frontier for the enemy
-    let mut frontier: VecDeque<GridCoords> = VecDeque::new();
-    frontier.push_back(GridCoords {
-        x: enemy.single_mut().x,
-        y: enemy.single_mut().y,
-    });
-
-    let mut reached: Vec<GridCoords> = Vec::new();
-    reached.push(GridCoords {
-        x: enemy.single_mut().x,
-        y: enemy.single_mut().y,
-    });
+    //
 
     // tick the timer
     enemy_timer.walk_timer.tick(time.delta());
     // let mut player_coords = player_pos.single_mut();
 
-    let mut index: usize = 0;
-    while !frontier.is_empty() {
-        let mut current = frontier.get_mut(index);
-        for next in level_grounds.ground_locations.iter() {}
+    let mut player_position = Box::new(GridCoords { x: 0, y: 0 });
+    for player_place in player_pos.iter_mut() {
+        *player_position = GridCoords {
+            x: player_place.player_position.x,
+            y: player_place.player_position.y,
+        }
     }
 
-    // let mut movement_direction = Box::new(GridCoords { x: 0, y: 0 });
-    // for player_place in player_pos.iter_mut() {
-    //     *movement_direction = GridCoords {
-    //         x: player_place.player_position.x,
-    //         y: player_place.player_position.y,
-    //     }
-    // }
+    for mut enemy_grid_coords in enemy.iter_mut() {
+        if enemy_timer.walk_timer.finished() {
+            let destination = *enemy_grid_coords - *player_position;
+            let result = bfs(
+                &GridCoords {
+                    x: enemy_grid_coords.x,
+                    y: enemy_grid_coords.y,
+                },
+                |p| p.successors(),
+                |p| *p.successors() == player_position,
+            );
+            println!("the player destination: {:?}", &player_position);
+            println!("the enemy destination: {:?}", &destination);
+            if !level_walls.in_wall(&destination) {
+                *enemy_grid_coords = destination;
+            }
+        }
+    }
+}
 
-    // for mut enemy_grid_coords in enemy.iter_mut() {
-    //     if enemy_timer.walk_timer.finished() {
-    //         let destination = *enemy_grid_coords - *movement_direction;
-    //         println!("the player destination: {:?}", &movement_direction);
-    //         println!("the enemy destination: {:?}", &destination);
-    //         if !level_walls.in_wall(&destination) {
-    //             *enemy_grid_coords = destination;
-    //         }
-    //     }
-    // }
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+struct Pos(i32, i32);
+
+impl Pos {
+    fn successors(&self) -> Vec<GridCoords> {
+        let &Pos(x, y) = self;
+        let enemy_pos = vec![
+            GridCoords { x: x + 1, y: y + 2 },
+            GridCoords { x: x + 1, y: y - 2 },
+            GridCoords { x: x - 1, y: y + 2 },
+            GridCoords { x: x - 1, y: y - 2 },
+            GridCoords { x: x + 2, y: y + 1 },
+            GridCoords { x: x + 2, y: y - 1 },
+            GridCoords { x: x - 2, y: y + 1 },
+            GridCoords { x: x - 2, y: y - 1 },
+        ];
+        return enemy_pos;
+    }
 }
 
 // Load all entities

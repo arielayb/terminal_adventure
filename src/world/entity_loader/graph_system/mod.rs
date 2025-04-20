@@ -1,7 +1,7 @@
-use bevy::log::info;
 use array2d::{Array2D, Error};
+use bevy::log::info;
 
-pub trait GraphBaseEvent{
+pub trait GraphBaseEvent {
     fn gen_empty_matrix(&mut self, num_vertices: usize);
     fn add_edge(&mut self, v1: usize, v2: usize, weight: u32);
     fn get_adj_vertices(&mut self, v: usize) -> Vec<u32>;
@@ -10,13 +10,13 @@ pub trait GraphBaseEvent{
     fn num_of_vertices(&mut self) -> usize;
 }
 
-pub struct AdjMatrixGraph{
+pub struct AdjMatrixGraph {
     pub num_vertices: usize,
     pub directed: bool,
-    pub matrix: Array2D<u32>
+    pub matrix: Array2D<u32>,
 }
 
-impl GraphBaseEvent for AdjMatrixGraph{
+impl GraphBaseEvent for AdjMatrixGraph {
     fn gen_empty_matrix(&mut self, num_vertices: usize) {
         self.num_vertices = num_vertices;
         for rows in 0..=num_vertices {
@@ -27,7 +27,9 @@ impl GraphBaseEvent for AdjMatrixGraph{
     }
 
     fn add_edge(&mut self, v1: usize, v2: usize, weight: u32) {
-        if v1 >= self.num_vertices.try_into().unwrap() || v2 >= self.num_vertices.try_into().unwrap() {
+        if v1 >= self.num_vertices.try_into().unwrap()
+            || v2 >= self.num_vertices.try_into().unwrap()
+        {
             info!("Vertices are out of bounds");
         }
 
@@ -42,7 +44,6 @@ impl GraphBaseEvent for AdjMatrixGraph{
         if !self.directed {
             // self.matrix[v2][v1] = weight;
             let _ = self.matrix.set(v2, v1, weight);
-
         }
     }
 
@@ -58,7 +59,7 @@ impl GraphBaseEvent for AdjMatrixGraph{
                 adjacent_vertices.push(i.try_into().unwrap());
             }
         }
-        
+
         return adjacent_vertices;
     }
 
@@ -68,16 +69,16 @@ impl GraphBaseEvent for AdjMatrixGraph{
         return edge_weight;
     }
 
-    fn display(&mut self){
-        for i in 0..=self.matrix.row_len().try_into().unwrap() { 
-            for j in i+1..=self.matrix.column_len().try_into().unwrap() {
+    fn display(&mut self) {
+        for i in 0..=self.matrix.row_len().try_into().unwrap() {
+            for j in i + 1..=self.matrix.column_len().try_into().unwrap() {
                 if self.matrix.get(i, j) >= Some(&1) {
                     println!("{} -> {}", i, j);
                 }
             }
-       }
+        }
     }
-    
+
     fn num_of_vertices(&mut self) -> usize {
         return self.num_vertices;
     }
