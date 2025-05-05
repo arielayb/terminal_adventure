@@ -17,7 +17,7 @@ use bevy_text_popup::{
 };
 use name_maker::Gender;
 use name_maker::RandomNameGenerator;
-use pathfinding::prelude::bfs;
+use pathfinding::prelude::{astar, Grid};
 use rand::prelude::*;
 use std::collections::HashSet;
 use std::collections::VecDeque;
@@ -343,6 +343,7 @@ fn move_enemy(
     // let mut player_coords = player_pos.single_mut();
 
     let mut player_position = Box::new(GridCoords { x: 0, y: 0 });
+    
     for player_place in player_pos.iter_mut() {
         *player_position = GridCoords {
             x: player_place.player_position.x,
@@ -351,20 +352,30 @@ fn move_enemy(
     }
 
     for mut enemy_grid_coords in enemy.iter_mut() {
-        if enemy_timer.walk_timer.finished() {
-            let destination = *enemy_grid_coords - *player_position;
-            let result = bfs(
-                &GridCoords {
-                    x: enemy_grid_coords.x,
-                    y: enemy_grid_coords.y,
-                },
-                |p| p.successors(),
-                |p| *p.successors() == player_position,
-            );
-            println!("the player destination: {:?}", &player_position);
-            println!("the enemy destination: {:?}", &destination);
-            if !level_walls.in_wall(&destination) {
-                *enemy_grid_coords = destination;
+        let mut result = bfs(
+            &Pos(enemy_grid_coords.x, enemy_grid_coords.y),
+            |p| p.successors(),
+            |p| *p == Pos(player_position.x, player_position.y),
+        );
+
+        for dest in result.iter_mut() {
+            let destination = &dest[0];
+            let testvarx :i32 = destination.0;
+            let testvary :i32 = destination.1;
+            println!("the testvarx destination: player posx {:?}, player posy {:?}", &testvarx, &testvary);
+            
+            let movement_direction = GridCoords::new(testvarx, testvary);
+
+            if enemy_timer.walk_timer.finished() {
+                // let movement_direction = GridCoords::new(testvarx, testvary);
+                let enemy_destination = *enemy_grid_coords + movement_direction;
+
+                println!("the player destination: {:?}", &player_position);
+                println!("the enemy destination: {:?}", &enemy_destination);
+                // if !level_walls.in_wall(&destination.1) {
+                if !level_walls.in_wall(&enemy_destination) {
+                    *enemy_grid_coords = enemy_destination;
+                }
             }
         }
     }
@@ -374,17 +385,17 @@ fn move_enemy(
 struct Pos(i32, i32);
 
 impl Pos {
-    fn successors(&self) -> Vec<GridCoords> {
+    fn successors(&self) -> Vec<Pos> {
         let &Pos(x, y) = self;
         let enemy_pos = vec![
-            GridCoords { x: x + 1, y: y + 2 },
-            GridCoords { x: x + 1, y: y - 2 },
-            GridCoords { x: x - 1, y: y + 2 },
-            GridCoords { x: x - 1, y: y - 2 },
-            GridCoords { x: x + 2, y: y + 1 },
-            GridCoords { x: x + 2, y: y - 1 },
-            GridCoords { x: x - 2, y: y + 1 },
-            GridCoords { x: x - 2, y: y - 1 },
+            Pos(x + 1, y + 2),
+            Pos(x + 1, y - 2),
+            Pos(x - 1, y + 2),
+            Pos(x - 1, y - 2),
+            Pos(x + 2, y + 1),
+            Pos(x + 2, y - 1),
+            Pos(x - 2, y + 1),
+            Pos(x - 2, y - 1),
         ];
         return enemy_pos;
     }
