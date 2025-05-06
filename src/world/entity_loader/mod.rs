@@ -15,9 +15,12 @@ use bevy_ecs_ldtk::prelude::*;
 use bevy_text_popup::{
     TextPopupButton, TextPopupEvent, TextPopupLocation, TextPopupPlugin, TextPopupTimeout,
 };
+use grid_pathfinding::PathingGrid;
+use grid_util::grid::Grid;
+use grid_util::point::Point;
 use name_maker::Gender;
 use name_maker::RandomNameGenerator;
-use pathfinding::prelude::{astar, Grid};
+// use pathfinding::prelude::{bfs, Grid};
 use rand::prelude::*;
 use std::collections::HashSet;
 use std::collections::VecDeque;
@@ -185,7 +188,7 @@ fn spawn_player(mut commands: Commands) {
                 attack_enemy: false,
             },
             player::PlayerPosition {
-                player_position: Box::new(GridCoords { x: 0, y: 0 }),
+                player_position: Box::new(GridCoords { x: 15, y: 11 }),
             },
         ));
 }
@@ -330,13 +333,12 @@ fn move_npc(
 fn move_enemy(
     time: Res<Time>,
     mut player_pos: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
-    mut enemy: Query<&mut GridCoords, With<enemy::Enemy>>,
+    mut enemy_pos: Query<&mut GridCoords, With<enemy::Enemy>>,
     mut enemy_timer: ResMut<enemy::EnemyWalkConfig>,
     level_walls: Res<LevelWalls>,
 ) {
-    // let enemy_x: i32 = player_x - enemy.single_mut().x;
-    // let enemy_y: i32 = player_y - enemy.single_mut().y;
-    //
+    // let enemy_x: i32 = enemy_pos.single_mut().x;
+    // let enemy_y: i32 = enemy_pos.single_mut().y;
 
     // tick the timer
     enemy_timer.walk_timer.tick(time.delta());
@@ -351,28 +353,35 @@ fn move_enemy(
         }
     }
 
-    for mut enemy_grid_coords in enemy.iter_mut() {
-        let mut result = bfs(
-            &Pos(enemy_grid_coords.x, enemy_grid_coords.y),
-            |p| p.successors(),
-            |p| *p == Pos(player_position.x, player_position.y),
-        );
+    let mut pathing_grid: PathingGrid = PathingGrid::new(640, 368, false);
+    pathing_grid.set(16, 16, true);
+    pathing_grid.generate_components();
 
-        for dest in result.iter_mut() {
-            let destination = &dest[0];
-            let testvarx :i32 = destination.0;
-            let testvary :i32 = destination.1;
-            println!("the testvarx destination: player posx {:?}, player posy {:?}", &testvarx, &testvary);
+    for mut enemy_grid_coords in enemy_pos.iter_mut() {
+        // let result = bfs(
+        //     &Pos(enemy_grid_coords.x, enemy_grid_coords.y),
+        //     |p| p.successors(),
+        //     |p| *p == Pos(player_position.x, player_position.y),
+        // );
+        // // println!("the result value: {:?}", &result.unwrap());
+
+        // for dest in result.unwrap().iter_mut() {
+        //     let testvarx :i32 = dest.0;
+        //     let testvary :i32 = dest.1;
+        //     println!("the testvarx destination: enemy posx {:?}, enemy posy {:?}", &testvarx, &testvary);
             
-            let movement_direction = GridCoords::new(testvarx, testvary);
+        let start = Point::new(enemy_grid_coords.x, enemy_grid_coords.y);
+        let end = Point::new(player_position.x, player_position.y);
+        let mut path = pathing_grid
+            .get_path_single_goal(start, end, false)
+            .unwrap();
+        println!("Path:");
 
+        for dest in path.iter_mut() {
+            println!("{:?}", dest);
+            let movement_direction = GridCoords::new(dest.x, dest.y);
             if enemy_timer.walk_timer.finished() {
-                // let movement_direction = GridCoords::new(testvarx, testvary);
                 let enemy_destination = *enemy_grid_coords + movement_direction;
-
-                println!("the player destination: {:?}", &player_position);
-                println!("the enemy destination: {:?}", &enemy_destination);
-                // if !level_walls.in_wall(&destination.1) {
                 if !level_walls.in_wall(&enemy_destination) {
                     *enemy_grid_coords = enemy_destination;
                 }
