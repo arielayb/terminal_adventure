@@ -70,7 +70,6 @@ impl Plugin for EntityLoader {
                 move_enemy,
                 translate_grid_coords_entities,
                 cache_wall_locations,
-                cache_ground_locations,
                 npc_interact,
                 update_camera,
             ),
@@ -390,26 +389,6 @@ fn move_enemy(
     }
 }
 
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct Pos(i32, i32);
-
-impl Pos {
-    fn successors(&self) -> Vec<Pos> {
-        let &Pos(x, y) = self;
-        let enemy_pos = vec![
-            Pos(x + 1, y + 2),
-            Pos(x + 1, y - 2),
-            Pos(x - 1, y + 2),
-            Pos(x - 1, y - 2),
-            Pos(x + 2, y + 1),
-            Pos(x + 2, y - 1),
-            Pos(x - 2, y + 1),
-            Pos(x - 2, y - 1),
-        ];
-        return enemy_pos;
-    }
-}
-
 // Load all entities
 fn translate_grid_coords_entities(
     mut grid_coords_entities: Query<(&mut Transform, &GridCoords), Changed<GridCoords>>,
@@ -448,36 +427,6 @@ fn cache_wall_locations(
             };
 
             *level_walls = new_level_walls;
-        }
-    }
-}
-
-fn cache_ground_locations(
-    mut level_grounds: ResMut<LevelGrounds>,
-    mut level_events: EventReader<LevelEvent>,
-    grounds: Query<&GridCoords, With<Ground>>,
-    ldtk_project_entities: Query<&Handle<LdtkProject>>,
-    ldtk_project_assets: Res<Assets<LdtkProject>>,
-) {
-    const GRID_SIZE: i32 = 16;
-    for level_event in level_events.read() {
-        if let LevelEvent::Spawned(level_iid) = level_event {
-            let ldtk_project = ldtk_project_assets
-                .get(ldtk_project_entities.single())
-                .expect("LdtkProject should be loaded when level is spawned");
-            let level = ldtk_project
-                .get_raw_level_by_iid(level_iid.get())
-                .expect("spawned level should exist in project");
-
-            let ground_locations = grounds.iter().copied().collect();
-
-            let new_level_grounds = LevelGrounds {
-                ground_locations,
-                level_width: level.px_wid / GRID_SIZE,
-                level_height: level.px_hei / GRID_SIZE,
-            };
-
-            *level_grounds = new_level_grounds;
         }
     }
 }
