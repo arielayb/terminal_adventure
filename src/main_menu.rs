@@ -1,9 +1,6 @@
 use crate::states::*;
 use bevy::{
-    core_pipeline::{
-        bloom::BloomSettings,
-        tonemapping::Tonemapping,
-    },
+    core_pipeline::{bloom::Bloom, tonemapping::Tonemapping},
     prelude::*,
 };
 use std::process;
@@ -35,9 +32,10 @@ struct Options {
 struct OnMenuScreen;
 
 fn title_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let text_style = TextStyle {
+    let text_style = TextFont {
         font: asset_server.load("fonts/alphacorsa.personal-use.ttf"),
         font_size: 60.0,
+        ....Default::default(),
         color: Color::WHITE,
     };
 
@@ -50,7 +48,7 @@ fn title_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
             tonemapping: Tonemapping::TonyMcMapface, // 2. Using a tonemapper that desaturates to white is recommended
             ..default()
         },
-        BloomSettings::default(),
+        Bloom::default(),
         OnMenuScreen, // 3. Enable bloom for the camera
     ));
 
@@ -136,7 +134,8 @@ fn selector(
             }
         }
 
-        if (keys.just_pressed(KeyCode::KeyW) || keys.just_pressed(KeyCode::ArrowUp)) && !opt.top_sel {
+        if (keys.just_pressed(KeyCode::KeyW) || keys.just_pressed(KeyCode::ArrowUp)) && !opt.top_sel
+        {
             *logo = Selection::Top;
             opt.top_sel = true;
             opt.mid_sel = false;

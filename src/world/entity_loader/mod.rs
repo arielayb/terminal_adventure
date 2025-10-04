@@ -5,17 +5,15 @@
 */
 use crate::states::*;
 use bevy::audio::CpalSample;
-use bevy::core_pipeline::bloom::BloomSettings;
+use bevy::core_pipeline::bloom::Bloom;
 use bevy::prelude::*;
 use bevy::reflect::List;
 use bevy::text::JustifyText;
 use bevy::time;
-use bevy::utils::tracing::field::debug;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_text_popup::{
     TextPopupButton, TextPopupEvent, TextPopupLocation, TextPopupPlugin, TextPopupTimeout,
 };
-use grid_pathfinding::PathingGrid;
 use grid_util::grid::Grid;
 use grid_util::point::Point;
 use name_maker::Gender;
@@ -344,7 +342,7 @@ fn move_enemy(
     // let mut player_coords = player_pos.single_mut();
 
     let mut player_position = Box::new(GridCoords { x: 0, y: 0 });
-    
+
     for player_place in player_pos.iter_mut() {
         *player_position = GridCoords {
             x: player_place.player_position.x,
@@ -368,7 +366,7 @@ fn move_enemy(
         //     let testvarx :i32 = dest.0;
         //     let testvary :i32 = dest.1;
         //     println!("the testvarx destination: enemy posx {:?}, enemy posy {:?}", &testvarx, &testvary);
-            
+
         let start = Point::new(enemy_grid_coords.x, enemy_grid_coords.y);
         let end = Point::new(player_position.x, player_position.y);
         let mut path = pathing_grid

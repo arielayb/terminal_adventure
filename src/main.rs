@@ -25,7 +25,7 @@ fn main() {
                 ..Default::default()
             }),
             LogDiagnosticsPlugin::default(),
-            FrameTimeDiagnosticsPlugin,
+            FrameTimeDiagnosticsPlugin::default(),
         ))
         .init_state::<states::GameState>()
         .init_state::<states::PausedState>()
