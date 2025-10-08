@@ -158,8 +158,8 @@ pub struct PlayerClass {
 #[derive(Default, Bundle, LdtkEntity)]
 pub struct PlayerBundle {
     pub player_entity: Player,
-    #[sprite_sheet_bundle]
-    pub sprite_sheet_bundle: LdtkSpriteSheetBundle,
+    #[sprite_sheet]
+    pub sprite_sheet: Sprite,
     #[grid_coords]
     pub grid_coords: GridCoords,
 }

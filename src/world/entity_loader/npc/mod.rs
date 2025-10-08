@@ -23,8 +23,8 @@ pub struct NpcDialogue {
 #[derive(Default, Bundle, LdtkEntity)]
 pub struct NpcBundle {
     pub npc: Npc,
-    #[sprite_sheet_bundle]
-    pub sprite_sheet_bundle: LdtkSpriteSheetBundle,
+    #[sprite_sheet]
+    pub sprite_sheet: Sprite,
     #[grid_coords]
     pub grid_coords: GridCoords,
 }

@@ -1,5 +1,6 @@
 use crate::states::*;
 use bevy::{
+    color::palettes::css::WHITE,
     core_pipeline::{bloom::Bloom, tonemapping::Tonemapping},
     prelude::*,
 };
@@ -32,32 +33,11 @@ struct Options {
 struct OnMenuScreen;
 
 fn title_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let text_style = TextFont {
-        font: asset_server.load("fonts/alphacorsa.personal-use.ttf"),
-        font_size: 60.0,
-        ....Default::default(),
-        color: Color::WHITE,
-    };
+    commands.spawn((Camera2d, Bloom::NATURAL));
 
     commands.spawn((
-        Camera2dBundle {
-            camera: Camera {
-                hdr: true, // 1. HDR is required for bloom
-                ..default()
-            },
-            tonemapping: Tonemapping::TonyMcMapface, // 2. Using a tonemapper that desaturates to white is recommended
-            ..default()
-        },
-        Bloom::default(),
-        OnMenuScreen, // 3. Enable bloom for the camera
-    ));
-
-    commands.spawn((
-        SpriteBundle {
-            texture: asset_server.load("workers/right.png"),
-            transform: Transform::from_xyz(-280., -150., 0.),
-            ..default()
-        },
+        Sprite::from_image(asset_server.load("workers/right.png")),
+        Transform::from_xyz(-280., -150., 0.),
         Selection::Top,
         Options {
             top_sel: true,
@@ -68,38 +48,50 @@ fn title_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
 
     commands.spawn((
-        Text2dBundle {
-            text: Text::from_section("|- TERMINAL OVERLORD -|", text_style.clone()),
-            transform: Transform::from_xyz(5., 100., 0.),
-            ..default()
+        Text2d::new("|- TERMINAL OVERLORD -|"),
+        TextFont {
+            font: asset_server.load("fonts/alphacorsa.personal-use.ttf"),
+            font_size: 60.0,
+            ..Default::default()
         },
+        Transform::from_xyz(5., 100., 0.),
+        TextColor(WHITE.into()),
         OnMenuScreen,
     ));
 
     commands.spawn((
-        Text2dBundle {
-            text: Text::from_section("New Game", text_style.clone()),
-            transform: Transform::from_xyz(-20., -150., 0.),
-            ..default()
+        Text2d::new("New Game"),
+        TextFont {
+            font: asset_server.load("fonts/alphacorsa.personal-use.ttf"),
+            font_size: 60.0,
+            ..Default::default()
         },
+        Transform::from_xyz(-20., -150., 0.),
+        TextColor(WHITE.into()),
         OnMenuScreen,
     ));
 
     commands.spawn((
-        Text2dBundle {
-            text: Text::from_section("Load Save", text_style.clone()),
-            transform: Transform::from_xyz(-20., -250., 0.),
-            ..default()
+        Text2d::new("Load Save"),
+        TextFont {
+            font: asset_server.load("fonts/alphacorsa.personal-use.ttf"),
+            font_size: 60.0,
+            ..Default::default()
         },
+        Transform::from_xyz(-20., -250., 0.),
+        TextColor(WHITE.into()),
         OnMenuScreen,
     ));
 
     commands.spawn((
-        Text2dBundle {
-            text: Text::from_section("Exit", text_style.clone()),
-            transform: Transform::from_xyz(-148., -350., 0.),
-            ..default()
+        Text2d::new("Exit"),
+        TextFont {
+            font: asset_server.load("fonts/alphacorsa.personal-use.ttf"),
+            font_size: 60.0,
+            ..Default::default()
         },
+        Transform::from_xyz(-148., -350., 0.),
+        TextColor(WHITE.into()),
         OnMenuScreen,
     ));
 }

@@ -4,26 +4,27 @@
     components for NPCs and player modules.
 */
 use crate::states::*;
-use bevy::audio::CpalSample;
+//use bevy::audio::CpalSample;
 use bevy::core_pipeline::bloom::Bloom;
 use bevy::prelude::*;
-use bevy::reflect::List;
+use bevy::render::camera::Viewport;
+//use bevy::reflect::List;
 use bevy::text::JustifyText;
-use bevy::time;
+//use bevy::time;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_text_popup::{
     TextPopupButton, TextPopupEvent, TextPopupLocation, TextPopupPlugin, TextPopupTimeout,
 };
-use grid_util::grid::Grid;
+//use grid_util::grid::Grid;
 use grid_util::point::Point;
 use name_maker::Gender;
 use name_maker::RandomNameGenerator;
 // use pathfinding::prelude::{bfs, Grid};
 use rand::prelude::*;
 use std::collections::HashSet;
-use std::collections::VecDeque;
-use std::thread::current;
-use std::vec;
+//use std::collections::VecDeque;
+//use std::thread::current;
+//use std::vec;
 
 // import other modules
 mod dice_system;
@@ -63,14 +64,14 @@ impl Plugin for EntityLoader {
         .add_systems(
             Update,
             (
+                update_camera,
                 player_control,
                 move_npc,
-                move_enemy,
                 translate_grid_coords_entities,
                 cache_wall_locations,
                 npc_interact,
-                update_camera,
-            ),
+            )
+                .chain(),
         )
         .add_systems(OnExit(GameState::Running), despawn_screen::<OnGameScreen>);
     }
@@ -78,13 +79,15 @@ impl Plugin for EntityLoader {
 
 // setup the world and camera
 fn camera_setup(mut commands: Commands) {
-    //commands.spawn(Camera2dBundle::default());
-
-    let mut camera = Camera2dBundle::default();
-    camera.projection.scale = 0.3;
-    camera.transform.translation.x += 640.0 / 4.;
-    camera.transform.translation.y += 480.0 / 4.;
-    camera.camera.hdr = true;
+    //commands.spawn((Camera2d, Bloom::NATURAL));
+    let mut camera = Camera { 
+        viewport: Viewport 
+        hdr: true 
+    };
+    //camera.projection.scale = 0.3;
+    //camera.translation.x += 640.0 / 4.;
+    //camera.translation.y += 480.0 / 4.;
+    //camera.hdr = true;
 
     commands.spawn(camera);
 }
@@ -258,14 +261,14 @@ fn player_control(
     mut player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
     input: Res<ButtonInput<KeyCode>>,
     level_walls: Res<LevelWalls>,
-) {
+) -> Result {
     if input.just_pressed(KeyCode::KeyE) {
         info!("e key pressed");
         // interaction with objects
-        let mut touch = player_event.single_mut();
+        let mut touch = player_event.single_mut()?;
         touch.interact = true;
     } else if input.just_released(KeyCode::KeyE) {
-        let mut touch = player_event.single_mut();
+        let mut touch = player_event.single_mut()?;
         touch.interact = false;
     }
 
@@ -287,10 +290,10 @@ fn player_control(
         } else if input.just_pressed(KeyCode::Numpad3) {
             GridCoords::new(1, -1)
         } else {
-            return;
+            return Ok(());
         };
 
-    let mut player_coords = player_pos.single_mut();
+    let mut player_coords = player_pos.single_mut()?;
 
     for mut player_grid_coords in players.iter_mut() {
         let destination = *player_grid_coords + movement_direction;
@@ -299,6 +302,7 @@ fn player_control(
             *player_grid_coords = destination;
         }
     }
+    Ok(())
 }
 
 fn move_npc(
@@ -327,7 +331,7 @@ fn move_npc(
     }
 }
 
-fn move_enemy(
+/*fn move_enemy(
     time: Res<Time>,
     mut player_pos: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
     mut enemy_pos: Query<&mut GridCoords, With<enemy::Enemy>>,
@@ -350,26 +354,16 @@ fn move_enemy(
         }
     }
 
-    let mut pathing_grid: PathingGrid = PathingGrid::new(640, 368, false);
-    pathing_grid.set(16, 16, true);
-    pathing_grid.generate_components();
-
     for mut enemy_grid_coords in enemy_pos.iter_mut() {
-        // let result = bfs(
-        //     &Pos(enemy_grid_coords.x, enemy_grid_coords.y),
-        //     |p| p.successors(),
-        //     |p| *p == Pos(player_position.x, player_position.y),
-        // );
-        // // println!("the result value: {:?}", &result.unwrap());
 
-        // for dest in result.unwrap().iter_mut() {
-        //     let testvarx :i32 = dest.0;
+        //for dest in result.unwrap().iter_mut() {
+        //let testvarx :i32 = dest.0;
         //     let testvary :i32 = dest.1;
         //     println!("the testvarx destination: enemy posx {:?}, enemy posy {:?}", &testvarx, &testvary);
 
-        let start = Point::new(enemy_grid_coords.x, enemy_grid_coords.y);
-        let end = Point::new(player_position.x, player_position.y);
-        let mut path = pathing_grid
+        //let start = Point::new(enemy_grid_coords.x, enemy_grid_coords.y);
+        //let end = Point::new(player_position.x, player_position.y);
+        /*let mut path = pathing_grid
             .get_path_single_goal(start, end, false)
             .unwrap();
         println!("Path:");
@@ -383,9 +377,9 @@ fn move_enemy(
                     *enemy_grid_coords = enemy_destination;
                 }
             }
-        }
+        }*/
     }
-}
+}*/
 
 // Load all entities
 fn translate_grid_coords_entities(
@@ -403,14 +397,14 @@ fn cache_wall_locations(
     mut level_walls: ResMut<LevelWalls>,
     mut level_events: EventReader<LevelEvent>,
     walls: Query<&GridCoords, With<Wall>>,
-    ldtk_project_entities: Query<&Handle<LdtkProject>>,
+    ldtk_project_entities: Query<&LdtkProjectHandle>,
     ldtk_project_assets: Res<Assets<LdtkProject>>,
-) {
+) -> Result {
     const GRID_SIZE: i32 = 16;
     for level_event in level_events.read() {
         if let LevelEvent::Spawned(level_iid) = level_event {
             let ldtk_project = ldtk_project_assets
-                .get(ldtk_project_entities.single())
+                .get(ldtk_project_entities.single()?)
                 .expect("LdtkProject should be loaded when level is spawned");
             let level = ldtk_project
                 .get_raw_level_by_iid(level_iid.get())
@@ -427,6 +421,7 @@ fn cache_wall_locations(
             *level_walls = new_level_walls;
         }
     }
+    Ok(())
 }
 
 fn npc_interact(
@@ -437,7 +432,7 @@ fn npc_interact(
     npc_coords: Query<&GridCoords, With<npc::Npc>>,
     mut npc_name: Query<&npc::NpcName, With<npc::NpcName>>,
     mut npc_dialogue: Query<&npc::NpcDialogue, With<npc::NpcDialogue>>,
-) {
+) -> Result {
     if players
         .iter()
         .zip(npc_coords.iter())
@@ -445,7 +440,7 @@ fn npc_interact(
     {
         info!("Npc collision detected...");
         //let mut rng = thread_rng();
-        let touch = player_event.single_mut();
+        let touch = player_event.single_mut()?;
         //let n: usize = rng.gen_range(0..=4);
 
         if touch.interact {
@@ -454,31 +449,36 @@ fn npc_interact(
             text_popup_events.send(TextPopupEvent {
                 content: format!(
                     "{} : \n{}",
-                    npc_name.single_mut().npc_name.to_string(),
-                    npc_dialogue.single_mut().dialogue
+                    npc_name.single_mut()?.npc_name.to_string(),
+                    npc_dialogue.single_mut()?.dialogue
                 ),
-                font: Some(asset_server.load("fonts/Fortine-Regular.otf")),
-                font_size: 20.,
+                text_font: TextFont {
+                    font: asset_server.load("fonts/Fortine-Regular.otf"),
+                    font_size: 20.,
+                    ..Default::default()
+                },
                 location: TextPopupLocation::Bottom,
                 text_alignment: JustifyText::Left,
-                border_color: Color::linear_rgb(100., 100., 100.),
-                modal: Some(Color::linear_rgba(0., 0., 0., 0.)),
+                //border_color: BorderColor::linear_rgb(100., 100., 100.),
+                border_color: BorderColor(Color::WHITE),
+                //modal: BackgroundColor(Color::BLACK),
                 timeout: TextPopupTimeout::Seconds(5),
                 ..default()
             });
         }
     }
+    Ok(())
 }
 
 fn enemy_interact(
-    asset_server: Res<AssetServer>,
+    //asset_server: Res<AssetServer>,
     players: Query<&GridCoords, With<player::Player>>,
     // mut text_popup_events: EventWriter<TextPopupEvent>,
-    mut player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
-    mut player_pos: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
+    // player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
+    //mut player_pos: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
     enemy_coords: Query<&GridCoords, With<enemy::Enemy>>,
     // mut npc_name: Query<&npc::NpcName, With<npc::NpcName>>,
-    mut enemy_dialogue: Query<&enemy::EnemyDialogue, With<enemy::EnemyDialogue>>,
+    //enemy_dialogue: Query<&enemy::EnemyDialogue, With<enemy::EnemyDialogue>>,
 ) {
     if players
         .iter()
@@ -487,11 +487,11 @@ fn enemy_interact(
     {
         info!("Npc collision detected...");
         //let mut rng = thread_rng();
-        let touch = player_event.single_mut();
-        let player_move = player_pos.single_mut();
+        //let touch = player_event.single_mut();
+        //let player_move = player_pos.single_mut();
         //let n: usize = rng.gen_range(0..=4);
 
-        if touch.attack_enemy {
+        /*if touch.attack_enemy {
             info!("<<< Enemy interaction >>>");
 
             // println!("{}", npc.single_mut().1.clone().get_npc_name());
@@ -510,14 +510,14 @@ fn enemy_interact(
             //     timeout: TextPopupTimeout::Seconds(5),
             //     ..default()
             // });
-        }
+        }*/
     }
 }
 
 // Update the camera position by tracking the player.
 fn update_camera(
     mut camera: Query<&mut Transform, (With<Camera2d>, Without<player::Player>)>,
-    player: Query<&mut GridCoords, With<player::Player>>,
+    player: Query<&mut GridCoords, (With<player::Player>, Without<Camera2d>)>,
 ) {
     for player_transform in &player {
         let pos_x = player_transform.x;

@@ -72,8 +72,8 @@ pub struct EnemyClass {
 #[derive(Default, Bundle, LdtkEntity)]
 pub struct EnemyBundle {
     pub enemy_entity: Enemy,
-    #[sprite_sheet_bundle]
-    pub sprite_sheet_bundle: LdtkSpriteSheetBundle,
+    #[sprite_sheet]
+    pub sprite_sheet: Sprite,
     #[grid_coords]
     pub grid_coords: GridCoords,
 }

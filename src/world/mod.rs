@@ -26,8 +26,8 @@ impl Plugin for World {
 
 // setup the world and camera
 fn world_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(LdtkWorldBundle {
-        ldtk_handle: asset_server.load("terminal_world.ldtk"),
+    commands.spawn(LdtkProjectHandle {
+        handle: asset_server.load("terminal_world.ldtk"),
         ..Default::default()
     });
 }
