@@ -5,11 +5,12 @@
 */
 use crate::states::*;
 //use bevy::audio::CpalSample;
-use bevy::core_pipeline::bloom::Bloom;
-use bevy::prelude::*;
-use bevy::render::camera::Viewport;
+use bevy::post_process::bloom::Bloom;
+use bevy::transform;
+use bevy::{prelude::*, camera::ScalingMode};
+// use bevy::render::camera::Viewport;
 //use bevy::reflect::List;
-use bevy::text::JustifyText;
+use bevy::text::Justify;
 //use bevy::time;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_text_popup::{
@@ -20,7 +21,7 @@ use grid_util::point::Point;
 use name_maker::Gender;
 use name_maker::RandomNameGenerator;
 // use pathfinding::prelude::{bfs, Grid};
-use rand::prelude::*;
+use rand::Rng;
 use std::collections::HashSet;
 //use std::collections::VecDeque;
 //use std::thread::current;
@@ -79,17 +80,14 @@ impl Plugin for EntityLoader {
 
 // setup the world and camera
 fn camera_setup(mut commands: Commands) {
-    //commands.spawn((Camera2d, Bloom::NATURAL));
-    let mut camera = Camera { 
-        viewport: Viewport 
-        hdr: true 
-    };
-    //camera.projection.scale = 0.3;
-    //camera.translation.x += 640.0 / 4.;
-    //camera.translation.y += 480.0 / 4.;
-    //camera.hdr = true;
-
-    commands.spawn(camera);
+    // let translation: Vec3 = Vec3{x:50. , y:50. , z: 0.}; 
+    commands.spawn((Name::new("Game Camera"), Camera2d::default(), Bloom::NATURAL,
+        Projection::Orthographic(OrthographicProjection { 
+            scaling_mode: ScalingMode::FixedVertical { viewport_height: 480.0 }, 
+            ..OrthographicProjection::default_2d()
+        }),
+        // Transform::from_translation(translation)
+    ));
 }
 
 #[derive(Default, Resource)]
@@ -204,8 +202,8 @@ fn spawn_npc(mut commands: Commands) {
 
     // let temp_hp: u32 = 10;
     let arr_dialogue: [&str; 5] = ["Hi...", "Hello..", "Yes?", "Go away.", "What do you want?"];
-    let mut rng = thread_rng();
-    let i: usize = rng.gen_range(0..=4);
+    let mut rng = rand::rng();
+    let i: usize = rng.random_range(0..=4);
 
     commands.spawn((
         npc::NpcBundle {
@@ -238,8 +236,8 @@ fn spawn_enemy(mut commands: Commands) {
         "Ack!!",
         "See you in hell.....",
     ];
-    let mut rng = thread_rng();
-    let i: usize = rng.gen_range(0..=4);
+    let mut rng = rand::rng();
+    let i: usize = rng.random_range(0..=4);
 
     commands.spawn((
         enemy::EnemyBundle {
@@ -311,10 +309,10 @@ fn move_npc(
     mut npc_timer: ResMut<npc::NpcWalkConfig>,
     level_walls: Res<LevelWalls>,
 ) {
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
-    let x: i32 = rng.gen_range(-1..=1);
-    let y: i32 = rng.gen_range(-1..=1);
+    let x: i32 = rng.random_range(-1..=1);
+    let y: i32 = rng.random_range(-1..=1);
 
     // tick the timer
     npc_timer.walk_timer.tick(time.delta());
@@ -322,7 +320,7 @@ fn move_npc(
     let movement_direction = GridCoords::new(x, y);
 
     for mut npc_grid_coords in npc.iter_mut() {
-        if npc_timer.walk_timer.finished() {
+        if npc_timer.walk_timer.is_finished() {
             let destination = *npc_grid_coords + movement_direction;
             if !level_walls.in_wall(&destination) {
                 *npc_grid_coords = destination;
@@ -395,7 +393,7 @@ fn translate_grid_coords_entities(
 
 fn cache_wall_locations(
     mut level_walls: ResMut<LevelWalls>,
-    mut level_events: EventReader<LevelEvent>,
+    mut level_events: MessageReader<LevelEvent>,
     walls: Query<&GridCoords, With<Wall>>,
     ldtk_project_entities: Query<&LdtkProjectHandle>,
     ldtk_project_assets: Res<Assets<LdtkProject>>,
@@ -427,7 +425,7 @@ fn cache_wall_locations(
 fn npc_interact(
     asset_server: Res<AssetServer>,
     players: Query<&GridCoords, With<player::Player>>,
-    mut text_popup_events: EventWriter<TextPopupEvent>,
+    mut text_popup_events: MessageWriter<TextPopupEvent>,
     mut player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
     npc_coords: Query<&GridCoords, With<npc::Npc>>,
     mut npc_name: Query<&npc::NpcName, With<npc::NpcName>>,
@@ -446,7 +444,8 @@ fn npc_interact(
         if touch.interact {
             info!("<<< NPC interaction >>>");
             // println!("{}", npc.single_mut().1.clone().get_npc_name());
-            text_popup_events.send(TextPopupEvent {
+            // text_popup_events.send(TextPopupEvent {
+            text_popup_events.write(TextPopupEvent {
                 content: format!(
                     "{} : \n{}",
                     npc_name.single_mut()?.npc_name.to_string(),
@@ -458,9 +457,9 @@ fn npc_interact(
                     ..Default::default()
                 },
                 location: TextPopupLocation::Bottom,
-                text_alignment: JustifyText::Left,
+                text_alignment: Justify::Left,
                 //border_color: BorderColor::linear_rgb(100., 100., 100.),
-                border_color: BorderColor(Color::WHITE),
+                border_color: Color::linear_rgb(100., 100., 100.).into(),
                 //modal: BackgroundColor(Color::BLACK),
                 timeout: TextPopupTimeout::Seconds(5),
                 ..default()
@@ -517,7 +516,7 @@ fn enemy_interact(
 // Update the camera position by tracking the player.
 fn update_camera(
     mut camera: Query<&mut Transform, (With<Camera2d>, Without<player::Player>)>,
-    player: Query<&mut GridCoords, (With<player::Player>, Without<Camera2d>)>,
+    player: Query<&mut GridCoords, With<player::Player>>,
 ) {
     for player_transform in &player {
         let pos_x = player_transform.x;

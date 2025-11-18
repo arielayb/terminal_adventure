@@ -1,7 +1,7 @@
 use crate::states::*;
 use bevy::{
     color::palettes::css::WHITE,
-    core_pipeline::{bloom::Bloom, tonemapping::Tonemapping},
+    post_process::{bloom::Bloom},
     prelude::*,
 };
 use std::process;
@@ -33,7 +33,8 @@ struct Options {
 struct OnMenuScreen;
 
 fn title_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn((Camera2d, Bloom::NATURAL));
+    commands.spawn((Name::new("main Menu"), Camera2d, IsDefaultUiCamera,
+    Bloom::NATURAL, OnMenuScreen));
 
     commands.spawn((
         Sprite::from_image(asset_server.load("workers/right.png")),

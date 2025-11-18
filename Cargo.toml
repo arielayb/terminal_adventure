@@ -1,7 +1,6 @@
 workspace = { members = ["dialogue_factory"] }
 [package]
 name = "terminal_overlord"
-author = "Ariel Aybar"
 version = "0.1.0"
 edition = "2021"
 
@@ -20,14 +19,14 @@ array2d = "0.3.2"
 # NOTE: Remember to revert this before releasing your game!
 # Otherwise you will need to include libbevy_dylib alongside your game if you want it to run.
 # If you remove the "dynamic" feature, your game executable can run standalone.
-bevy = { version = "0.16.0", features = ["dynamic_linking"] }
-bevy_ecs_ldtk = "0.12"
-bevy_text_popup = "0.6"
+bevy = { version = "0.17.0", features = ["dynamic_linking"] }
+bevy_ecs_ldtk = "0.13"
+bevy_text_popup = "0.7.0"
 bevy_northstar = "0.4"
 dialogue_factory = { path = "dialogue_factory" }            # from a path in the local filesystem
 dice-bag = "0.2.0"
 libudev-sys = "0.1.4"
 name_maker = "0.1.1"
-rand = "0.8.5"
+rand = "0.9.2"
 random_name_generator = "0.3.6"
-grid_util = "0.1.1"
+grid_util = "0.2.0"
