@@ -6,7 +6,9 @@ use bevy::{
 };
 use std::process;
 
+#[derive(Default, Component)]
 pub struct MainMenu;
+
 impl Plugin for MainMenu {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::TitleMenu), title_scene)
