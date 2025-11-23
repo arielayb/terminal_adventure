@@ -5,9 +5,24 @@ use bevy_ecs_ldtk::prelude::*;
 pub struct Player;
 
 #[derive(Default, Component, Debug)]
-pub struct PlayerName{
-    pub player_name: String
+pub struct PlayerName {
+    pub player_name: String,
 }
+
+#[derive(Default, Component, Debug)]
+pub struct PlayerPosition {
+    pub player_position: Box<GridCoords>,
+}
+
+// impl PlayerPosition {
+//     pub fn set_player_position(&mut self, player_position: Box<GridCoords>) {
+//         self.player_position = player_position;
+//     }
+
+//     pub fn get_player_position(&mut self) -> Box<GridCoords> {
+//         return *self.player_position;
+//     }
+// }
 
 impl PlayerName {
     pub fn set_player_name(&mut self, name: String) {
@@ -20,8 +35,8 @@ impl PlayerName {
 }
 
 #[derive(Default, Component, Debug)]
-pub struct PlayerHealth{
-    pub player_hp: u32
+pub struct PlayerHealth {
+    pub player_hp: u32,
 }
 
 impl PlayerHealth {
@@ -36,8 +51,8 @@ impl PlayerHealth {
 }
 
 #[derive(Default, Component, Debug)]
-pub struct PlayerTech{
-    pub player_tp: u32
+pub struct PlayerTech {
+    pub player_tp: u32,
 }
 
 impl PlayerTech {
@@ -52,13 +67,13 @@ impl PlayerTech {
 }
 
 #[derive(Default, Component, Debug)]
-pub struct PlayerLuck{
-    pub player_lp: u32
+pub struct PlayerLuck {
+    pub player_lp: u32,
 }
 
 #[derive(Default, Component, Debug)]
-pub struct PlayerCharm{
-    pub player_charm: u32
+pub struct PlayerCharm {
+    pub player_charm: u32,
 }
 
 impl PlayerCharm {
@@ -73,8 +88,8 @@ impl PlayerCharm {
 }
 
 #[derive(Default, Component, Debug)]
-pub struct PlayerAgility{
-    pub player_ap: u32
+pub struct PlayerAgility {
+    pub player_ap: u32,
 }
 
 impl PlayerAgility {
@@ -89,23 +104,23 @@ impl PlayerAgility {
 }
 
 #[derive(Default, Component, Debug)]
-pub struct PlayerWeaponExp{
-    pub player_wexp: u32
+pub struct PlayerWeaponExp {
+    pub player_wexp: u32,
 }
 
 #[derive(Default, Component, Debug)]
-pub struct PlayerLevel{
-    pub player_lvl: u32
+pub struct PlayerLevel {
+    pub player_lvl: u32,
 }
 
 #[derive(Default, Component, Debug)]
-pub struct PlayerZodiac{
-    pub player_zodiac: String
+pub struct PlayerZodiac {
+    pub player_zodiac: String,
 }
 
 #[derive(Default, Component, Debug)]
-pub struct PlayerStr{
-    pub player_sp: u32
+pub struct PlayerStr {
+    pub player_sp: u32,
 }
 
 impl PlayerStr {
@@ -120,8 +135,8 @@ impl PlayerStr {
 }
 
 #[derive(Default, Component, Debug)]
-pub struct PlayerDef{
-    pub equip_defense_val: u32
+pub struct PlayerDef {
+    pub equip_defense_val: u32,
 }
 
 impl PlayerDef {
@@ -136,20 +151,21 @@ impl PlayerDef {
 }
 
 #[derive(Default, Component, Debug)]
-pub struct PlayerClass{
-    pub player_class: String
+pub struct PlayerClass {
+    pub player_class: String,
 }
 
 #[derive(Default, Bundle, LdtkEntity)]
 pub struct PlayerBundle {
     pub player_entity: Player,
-    #[sprite_sheet_bundle]
-    pub sprite_sheet_bundle: LdtkSpriteSheetBundle,
+    #[sprite_sheet]
+    pub sprite_sheet: Sprite,
     #[grid_coords]
     pub grid_coords: GridCoords,
 }
 
 #[derive(Default, Component, Debug)]
-pub struct PlayerEvents{
-   pub interact: bool,
+pub struct PlayerEvents {
+    pub interact: bool,
+    pub attack_enemy: bool,
 }

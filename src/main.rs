@@ -16,7 +16,7 @@ fn main() {
                     fit_canvas_to_parent: true,
                     present_mode: PresentMode::AutoVsync,
                     mode: WindowMode::Windowed,
-                    resolution: (1920., 1080.).into(),
+                    resolution: (1920, 1080).into(),
                     title: "Terminal Overlord".into(),
                     window_theme: Some(WindowTheme::Dark),
                     visible: true,
@@ -25,7 +25,7 @@ fn main() {
                 ..Default::default()
             }),
             LogDiagnosticsPlugin::default(),
-            FrameTimeDiagnosticsPlugin,
+            FrameTimeDiagnosticsPlugin::default(),
         ))
         .init_state::<states::GameState>()
         .init_state::<states::PausedState>()

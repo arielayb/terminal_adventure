@@ -4,26 +4,34 @@
     components for NPCs and player modules.
 */
 use crate::states::*;
-use bevy::prelude::*;
-use bevy::core_pipeline::bloom::BloomSettings;
-use bevy::text::JustifyText;
-use bevy::audio::CpalSample;
-use bevy::time;
-use bevy_text_popup::{TextPopupEvent, TextPopupPlugin, TextPopupButton, TextPopupTimeout, TextPopupLocation};
+//use bevy::audio::CpalSample;
+use bevy::post_process::bloom::Bloom;
+use bevy::{prelude::*, camera::ScalingMode};
+// use bevy::render::camera::Viewport;
+//use bevy::reflect::List;
+use bevy::text::Justify;
+//use bevy::time;
 use bevy_ecs_ldtk::prelude::*;
-use player::PlayerDef;
-use rand::prelude::*;
-use std::collections::HashSet;
-use std::ops::Index;
-use name_maker::RandomNameGenerator;
+use bevy_text_popup::{
+    TextPopupButton, TextPopupEvent, TextPopupLocation, TextPopupPlugin, TextPopupTimeout,
+};
+//use grid_util::grid::Grid;
+use grid_util::point::Point;
 use name_maker::Gender;
+use name_maker::RandomNameGenerator;
+// use pathfinding::prelude::{bfs, Grid};
+use rand::Rng;
+use std::collections::HashSet;
+//use std::collections::VecDeque;
+//use std::thread::current;
+//use std::vec;
 
 // import other modules
-mod npc;
-mod player;
+mod dice_system;
 mod enemy;
 mod graph_system;
-mod dice_system;
+mod npc;
+mod player;
 mod player_dice_system;
 
 // Tag component used to tag entities added on the game screen
@@ -38,35 +46,62 @@ impl Plugin for EntityLoader {
     fn build(&self, app: &mut App) {
         // app.configure_sets(Update, ());
 
-        app.add_systems(OnEnter(GameState::Running), (camera_setup, spawn_player, spawn_npc))
-            .register_ldtk_entity::<npc::NpcBundle>("NPC")
-            .register_ldtk_entity::<player::PlayerBundle>("Player")
-            .register_ldtk_int_cell_for_layer::<WallBundle>("Walls", 1)
-            .register_ldtk_int_cell_for_layer::<WallBundle>("Water", 1)
-            .init_resource::<LevelWalls>()
-            .init_resource::<npc::NpcWalkConfig>()
-            .add_plugins(TextPopupPlugin)
-            .add_systems(Update, (player_control, 
-                                                    move_npc, 
-                                                    translate_grid_coords_entities, 
-                                                    cache_wall_locations, 
-                                                    npc_interact,
-                                                    update_camera))
-            .add_systems(OnExit(GameState::Running), despawn_screen::<OnGameScreen>);
+        app.add_systems(
+            OnEnter(GameState::Running),
+            (camera_setup, spawn_player, spawn_npc, spawn_enemy),
+        )
+        .register_ldtk_entity::<npc::NpcBundle>("NPC")
+        .register_ldtk_entity::<enemy::EnemyBundle>("Enemy")
+        .register_ldtk_entity::<player::PlayerBundle>("Player")
+        .register_ldtk_int_cell_for_layer::<WallBundle>("Walls", 1)
+        .register_ldtk_int_cell_for_layer::<WallBundle>("Water", 1)
+        .register_ldtk_int_cell_for_layer::<GroundBundle>("Ground", 1)
+        .init_resource::<LevelWalls>()
+        .init_resource::<LevelGrounds>()
+        .init_resource::<npc::NpcWalkConfig>()
+        .init_resource::<enemy::EnemyWalkConfig>()
+        .add_plugins(TextPopupPlugin)
+        .add_systems(
+            Update,
+            (
+                update_camera,
+                player_control,
+                move_npc,
+                translate_grid_coords_entities,
+                cache_wall_locations,
+                npc_interact,
+            )
+                .chain(),
+        )
+        .add_systems(OnExit(GameState::Running), despawn_screen::<OnGameScreen>);
     }
 }
 
 // setup the world and camera
 fn camera_setup(mut commands: Commands) {
-    //commands.spawn(Camera2dBundle::default());
-    
-    let mut camera = Camera2dBundle::default();
-    camera.projection.scale = 0.3;
-    camera.transform.translation.x += 640.0/4.;
-    camera.transform.translation.y += 480.0/4.;
-    camera.camera.hdr = true;
+    let translation: Vec3 = Vec3::new(640.0/4.0, 368.0/4.0, 0.0);
+    commands.spawn((Name::new("Game Camera"), Camera2d::default(), Bloom::NATURAL,
+        Projection::Orthographic(OrthographicProjection {
+        //     // near: 0.0, 
+        //     // far: 1000.,
+        //     // viewport_origin: Vec2 { x: 1., y: 1. }, 
+            scaling_mode: ScalingMode::WindowSize, 
+            scale: 0.3, 
+            // area: Rect { min: Vec2 { x: 0., y: 0. }, max: Vec2 { x: 256., y: 256. } },
+            ..OrthographicProjection::default_2d() 
+        }),
+        
+        // Transform::from_xyz(640., 368., 0.0).looking_at(Vec3{x: 640., y: 348., z: 0.}, Vec3::ZERO),
+        Transform::from_translation(translation).looking_at(Vec3{x: 640., y: 348., z: 0.}, Vec3::ZERO)
+    ));
 
-    commands.spawn(camera);
+    // commands.spawn((Name::new("Game Camera"), Camera2d::default(), Bloom::NATURAL,
+    //     Projection::Orthographic(OrthographicProjection { 
+    //         scaling_mode: ScalingMode::WindowSize,
+    //         ..OrthographicProjection::default_2d()
+    //     }),
+    //     // Transform::from_translation(translation)
+    // ));
 }
 
 #[derive(Default, Resource)]
@@ -86,12 +121,37 @@ impl LevelWalls {
     }
 }
 
+#[derive(Default, Resource)]
+struct LevelGrounds {
+    ground_locations: HashSet<GridCoords>,
+    level_width: i32,
+    level_height: i32,
+}
+
+impl LevelGrounds {
+    fn in_wall(&self, grid_coords: &GridCoords) -> bool {
+        grid_coords.x < 0
+            || grid_coords.y < 0
+            || grid_coords.x >= self.level_width
+            || grid_coords.y >= self.level_height
+            || self.ground_locations.contains(grid_coords)
+    }
+}
+
 #[derive(Default, Component)]
 struct Wall;
 
 #[derive(Default, Bundle, LdtkIntCell)]
 struct WallBundle {
     wall: Wall,
+}
+
+#[derive(Default, Component)]
+struct Ground;
+
+#[derive(Default, Bundle, LdtkIntCell)]
+struct GroundBundle {
+    ground: Ground,
 }
 
 fn spawn_player(mut commands: Commands) {
@@ -104,28 +164,45 @@ fn spawn_player(mut commands: Commands) {
     let temp_lp: u32 = 1;
     let temp_st: u32 = 5;
 
-    commands.spawn(
-        (player::PlayerBundle {
-            player_entity: player::Player,
-            ..Default::default()
-        },player::PlayerName{
-            player_name: temp_name 
-        },player::PlayerHealth{
-            player_hp: temp_hp
-        },player::PlayerAgility{
-          player_ap: temp_ag  
-        },player::PlayerDef{
-            equip_defense_val: temp_df
-        },player::PlayerCharm{
-            player_charm: temp_ch 
-        },player::PlayerLuck{
-            player_lp: temp_lp
-        },player::PlayerTech{
-            player_tp: temp_tp
-        },player::PlayerStr{
-            player_sp: temp_st
-        })
-    ).insert(player::PlayerEvents{interact: false});
+    // let player_setup = player::PlayerPosition {
+    //     player_position: GridCoords::new(15, 11),
+    // };
+
+    // let player_setup = Box<GridCoords>(GridCoords {
+    //     x: 15,
+    //     y: 11,
+    // });
+
+    commands
+        .spawn((
+            player::PlayerBundle {
+                player_entity: player::Player,
+                ..Default::default()
+            },
+            player::PlayerName {
+                player_name: temp_name,
+            },
+            player::PlayerHealth { player_hp: temp_hp },
+            player::PlayerAgility { player_ap: temp_ag },
+            player::PlayerDef {
+                equip_defense_val: temp_df,
+            },
+            player::PlayerCharm {
+                player_charm: temp_ch,
+            },
+            player::PlayerLuck { player_lp: temp_lp },
+            player::PlayerTech { player_tp: temp_tp },
+            player::PlayerStr { player_sp: temp_st },
+        ))
+        .insert((
+            player::PlayerEvents {
+                interact: false,
+                attack_enemy: false,
+            },
+            player::PlayerPosition {
+                player_position: Box::new(GridCoords { x: 15, y: 11 }),
+            },
+        ));
 }
 
 fn spawn_npc(mut commands: Commands) {
@@ -139,67 +216,105 @@ fn spawn_npc(mut commands: Commands) {
 
     // let temp_hp: u32 = 10;
     let arr_dialogue: [&str; 5] = ["Hi...", "Hello..", "Yes?", "Go away.", "What do you want?"];
-    let mut rng = thread_rng();
-    let i: usize  = rng.gen_range(0..=4);
+    let mut rng = rand::rng();
+    let i: usize = rng.random_range(0..=4);
 
-    commands.spawn(
-        (npc::NpcBundle{
+    commands.spawn((
+        npc::NpcBundle {
             npc: npc::Npc,
             ..Default::default()
-        },npc::NpcName{
-            npc_name: first_name
-        }, npc::NpcDialogue{
-            dialogue: arr_dialogue[i].to_string()
-        })
-    );
+        },
+        npc::NpcName {
+            npc_name: first_name,
+        },
+        npc::NpcDialogue {
+            dialogue: arr_dialogue[i].to_string(),
+        },
+    ));
+}
+
+fn spawn_enemy(mut commands: Commands) {
+    // TODO: work on design patterns for random NPC generator in next goal
+    // get a range for the name
+    // let rng = RNG::try_from(&Language::Fantasy).unwrap();
+    let rng = RandomNameGenerator::init();
+
+    // Prints a random name with a masculine first name.
+    let first_name: String = rng.generate_specific(Gender::Male).first_name;
+
+    // let temp_hp: u32 = 10;
+    let arr_dialogue: [&str; 5] = [
+        "No...",
+        "damn you!",
+        "Ahhhh!",
+        "Ack!!",
+        "See you in hell.....",
+    ];
+    let mut rng = rand::rng();
+    let i: usize = rng.random_range(0..=4);
+
+    commands.spawn((
+        enemy::EnemyBundle {
+            enemy_entity: enemy::Enemy,
+            ..Default::default()
+        },
+        enemy::EnemyName {
+            enemy_name: first_name,
+        },
+        enemy::EnemyDialogue {
+            dialogue: arr_dialogue[i].to_string(),
+        },
+    ));
 }
 
 fn player_control(
     mut players: Query<&mut GridCoords, With<player::Player>>,
+    mut player_pos: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
     mut player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
     input: Res<ButtonInput<KeyCode>>,
     level_walls: Res<LevelWalls>,
-) {
+) -> Result {
     if input.just_pressed(KeyCode::KeyE) {
         info!("e key pressed");
         // interaction with objects
-        let mut touch = player_event.single_mut();
+        let mut touch = player_event.single_mut()?;
         touch.interact = true;
     } else if input.just_released(KeyCode::KeyE) {
-        let mut touch = player_event.single_mut();
+        let mut touch = player_event.single_mut()?;
         touch.interact = false;
     }
 
-    let movement_direction = if input.just_pressed(KeyCode::KeyW) 
-    || input.just_pressed(KeyCode::Numpad8) {
-        GridCoords::new(0, 1)
-    } else if input.just_pressed(KeyCode::KeyA) 
-    || input.just_pressed(KeyCode::Numpad4) {
-        GridCoords::new(-1, 0)
-    } else if input.just_pressed(KeyCode::KeyS) 
-    || input.just_pressed(KeyCode::Numpad5) {
-        GridCoords::new(0, -1)
-    } else if input.just_pressed(KeyCode::KeyD) 
-    || input.just_pressed(KeyCode::Numpad6) {
-        GridCoords::new(1, 0)
-    } else if input.just_pressed(KeyCode::Numpad9) {
-        GridCoords::new(1, 1)
-    } else if input.just_pressed(KeyCode::Numpad1) {
-        GridCoords::new(-1, -1)
-    } else if input.just_pressed(KeyCode::Numpad7) {
-        GridCoords::new(-1, 1)
-    } else if input.just_pressed(KeyCode::Numpad3) {
+    let movement_direction =
+        if input.just_pressed(KeyCode::KeyW) || input.just_pressed(KeyCode::Numpad8) {
+            GridCoords::new(0, 1)
+        } else if input.just_pressed(KeyCode::KeyA) || input.just_pressed(KeyCode::Numpad4) {
+            GridCoords::new(-1, 0)
+        } else if input.just_pressed(KeyCode::KeyS) || input.just_pressed(KeyCode::Numpad5) {
+            GridCoords::new(0, -1)
+        } else if input.just_pressed(KeyCode::KeyD) || input.just_pressed(KeyCode::Numpad6) {
+            GridCoords::new(1, 0)
+        } else if input.just_pressed(KeyCode::Numpad9) {
+            GridCoords::new(1, 1)
+        } else if input.just_pressed(KeyCode::Numpad1) {
+            GridCoords::new(-1, -1)
+        } else if input.just_pressed(KeyCode::Numpad7) {
+            GridCoords::new(-1, 1)
+        } else if input.just_pressed(KeyCode::Numpad3) {
             GridCoords::new(1, -1)
-    } else {
-        return;
-    };
+        } else {
+            return Ok(());
+        };
+
+    let mut player_coords = player_pos.single_mut()?;
 
     for mut player_grid_coords in players.iter_mut() {
         let destination = *player_grid_coords + movement_direction;
+        *player_coords.player_position = destination;
         if !level_walls.in_wall(&destination) {
             *player_grid_coords = destination;
         }
     }
+    Ok(())
 }
 
 fn move_npc(
@@ -208,19 +323,19 @@ fn move_npc(
     mut npc_timer: ResMut<npc::NpcWalkConfig>,
     level_walls: Res<LevelWalls>,
 ) {
-    let mut rng = thread_rng();
-    
-    let x: i32 = rng.gen_range(-1..=1);
-    let y: i32  = rng.gen_range(-1..=1);
+    let mut rng = rand::rng();
+
+    let x: i32 = rng.random_range(-1..=1);
+    let y: i32 = rng.random_range(-1..=1);
 
     // tick the timer
     npc_timer.walk_timer.tick(time.delta());
-       
+
     let movement_direction = GridCoords::new(x, y);
 
     for mut npc_grid_coords in npc.iter_mut() {
-        if npc_timer.walk_timer.finished() {
-           let destination = *npc_grid_coords + movement_direction;
+        if npc_timer.walk_timer.is_finished() {
+            let destination = *npc_grid_coords + movement_direction;
             if !level_walls.in_wall(&destination) {
                 *npc_grid_coords = destination;
             }
@@ -228,6 +343,57 @@ fn move_npc(
     }
 }
 
+/*fn move_enemy(
+    time: Res<Time>,
+    mut player_pos: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
+    mut enemy_pos: Query<&mut GridCoords, With<enemy::Enemy>>,
+    mut enemy_timer: ResMut<enemy::EnemyWalkConfig>,
+    level_walls: Res<LevelWalls>,
+) {
+    // let enemy_x: i32 = enemy_pos.single_mut().x;
+    // let enemy_y: i32 = enemy_pos.single_mut().y;
+
+    // tick the timer
+    enemy_timer.walk_timer.tick(time.delta());
+    // let mut player_coords = player_pos.single_mut();
+
+    let mut player_position = Box::new(GridCoords { x: 0, y: 0 });
+
+    for player_place in player_pos.iter_mut() {
+        *player_position = GridCoords {
+            x: player_place.player_position.x,
+            y: player_place.player_position.y,
+        }
+    }
+
+    for mut enemy_grid_coords in enemy_pos.iter_mut() {
+
+        //for dest in result.unwrap().iter_mut() {
+        //let testvarx :i32 = dest.0;
+        //     let testvary :i32 = dest.1;
+        //     println!("the testvarx destination: enemy posx {:?}, enemy posy {:?}", &testvarx, &testvary);
+
+        //let start = Point::new(enemy_grid_coords.x, enemy_grid_coords.y);
+        //let end = Point::new(player_position.x, player_position.y);
+        /*let mut path = pathing_grid
+            .get_path_single_goal(start, end, false)
+            .unwrap();
+        println!("Path:");
+
+        for dest in path.iter_mut() {
+            println!("{:?}", dest);
+            let movement_direction = GridCoords::new(dest.x, dest.y);
+            if enemy_timer.walk_timer.finished() {
+                let enemy_destination = *enemy_grid_coords + movement_direction;
+                if !level_walls.in_wall(&enemy_destination) {
+                    *enemy_grid_coords = enemy_destination;
+                }
+            }
+        }*/
+    }
+}*/
+
+// Load all entities
 fn translate_grid_coords_entities(
     mut grid_coords_entities: Query<(&mut Transform, &GridCoords), Changed<GridCoords>>,
 ) {
@@ -241,16 +407,16 @@ fn translate_grid_coords_entities(
 
 fn cache_wall_locations(
     mut level_walls: ResMut<LevelWalls>,
-    mut level_events: EventReader<LevelEvent>,
+    mut level_events: MessageReader<LevelEvent>,
     walls: Query<&GridCoords, With<Wall>>,
-    ldtk_project_entities: Query<&Handle<LdtkProject>>,
+    ldtk_project_entities: Query<&LdtkProjectHandle>,
     ldtk_project_assets: Res<Assets<LdtkProject>>,
-) {
+) -> Result {
     const GRID_SIZE: i32 = 16;
     for level_event in level_events.read() {
         if let LevelEvent::Spawned(level_iid) = level_event {
             let ldtk_project = ldtk_project_assets
-                .get(ldtk_project_entities.single())
+                .get(ldtk_project_entities.single()?)
                 .expect("LdtkProject should be loaded when level is spawned");
             let level = ldtk_project
                 .get_raw_level_by_iid(level_iid.get())
@@ -267,18 +433,18 @@ fn cache_wall_locations(
             *level_walls = new_level_walls;
         }
     }
+    Ok(())
 }
 
 fn npc_interact(
     asset_server: Res<AssetServer>,
     players: Query<&GridCoords, With<player::Player>>,
-    mut text_popup_events: EventWriter<TextPopupEvent>,
+    mut text_popup_events: MessageWriter<TextPopupEvent>,
     mut player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
     npc_coords: Query<&GridCoords, With<npc::Npc>>,
     mut npc_name: Query<&npc::NpcName, With<npc::NpcName>>,
-    mut npc_dialogue: Query<&npc::NpcDialogue, With<npc::NpcDialogue>>
-
-) {
+    mut npc_dialogue: Query<&npc::NpcDialogue, With<npc::NpcDialogue>>,
+) -> Result {
     if players
         .iter()
         .zip(npc_coords.iter())
@@ -286,31 +452,85 @@ fn npc_interact(
     {
         info!("Npc collision detected...");
         //let mut rng = thread_rng();
-        let touch = player_event.single_mut();
+        let touch = player_event.single_mut()?;
         //let n: usize = rng.gen_range(0..=4);
 
         if touch.interact {
             info!("<<< NPC interaction >>>");
             // println!("{}", npc.single_mut().1.clone().get_npc_name());
-            text_popup_events.send(TextPopupEvent {
-                content: format!("{} : \n{}", npc_name.single_mut().npc_name.to_string(), npc_dialogue.single_mut().dialogue),
-                font: Some(asset_server.load("fonts/Fortine-Regular.otf")),
-                font_size: 20.,
+            // text_popup_events.send(TextPopupEvent {
+            text_popup_events.write(TextPopupEvent {
+                content: format!(
+                    "{} : \n{}",
+                    npc_name.single_mut()?.npc_name.to_string(),
+                    npc_dialogue.single_mut()?.dialogue
+                ),
+                text_font: TextFont {
+                    font: asset_server.load("fonts/Fortine-Regular.otf"),
+                    font_size: 20.,
+                    ..Default::default()
+                },
                 location: TextPopupLocation::Bottom,
-                text_alignment: JustifyText::Left,
-                border_color: Color::linear_rgb(100., 100., 100.),
-                modal: Some(Color::linear_rgba(0., 0., 0., 0.)),
+                text_alignment: Justify::Left,
+                //border_color: BorderColor::linear_rgb(100., 100., 100.),
+                border_color: Color::linear_rgb(100., 100., 100.).into(),
+                //modal: BackgroundColor(Color::BLACK),
                 timeout: TextPopupTimeout::Seconds(5),
                 ..default()
             });
         }
     }
+    Ok(())
 }
 
-/// Update the camera position by tracking the player.
+fn enemy_interact(
+    //asset_server: Res<AssetServer>,
+    players: Query<&GridCoords, With<player::Player>>,
+    // mut text_popup_events: EventWriter<TextPopupEvent>,
+    // player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
+    //mut player_pos: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
+    enemy_coords: Query<&GridCoords, With<enemy::Enemy>>,
+    // mut npc_name: Query<&npc::NpcName, With<npc::NpcName>>,
+    //enemy_dialogue: Query<&enemy::EnemyDialogue, With<enemy::EnemyDialogue>>,
+) {
+    if players
+        .iter()
+        .zip(enemy_coords.iter())
+        .any(|(player_grid_coords, enemy_grid_coords)| player_grid_coords == enemy_grid_coords)
+    {
+        info!("Npc collision detected...");
+        //let mut rng = thread_rng();
+        //let touch = player_event.single_mut();
+        //let player_move = player_pos.single_mut();
+        //let n: usize = rng.gen_range(0..=4);
+
+        /*if touch.attack_enemy {
+            info!("<<< Enemy interaction >>>");
+
+            // println!("{}", npc.single_mut().1.clone().get_npc_name());
+            // text_popup_events.send(TextPopupEvent {
+            //     content: format!(
+            //         "{} : \n{}",
+            //         npc_name.single_mut().npc_name.to_string(),
+            //         npc_dialogue.single_mut().dialogue
+            //     ),
+            //     font: Some(asset_server.load("fonts/Fortine-Regular.otf")),
+            //     font_size: 20.,
+            //     location: TextPopupLocation::Bottom,
+            //     text_alignment: JustifyText::Left,
+            //     border_color: Color::linear_rgb(100., 100., 100.),
+            //     modal: Some(Color::linear_rgba(0., 0., 0., 0.)),
+            //     timeout: TextPopupTimeout::Seconds(5),
+            //     ..default()
+            // });
+        }*/
+    }
+}
+
+// Update the camera position by tracking the player.
 fn update_camera(
     mut camera: Query<&mut Transform, (With<Camera2d>, Without<player::Player>)>,
-    player: Query<&mut GridCoords, With<player::Player>>
+    player: Query<&mut GridCoords, With<player::Player>>,
 ) {
     for player_transform in &player {
         let pos_x = player_transform.x;
@@ -327,22 +547,22 @@ fn update_camera(
 
 // Tests for the abstract factory dialogue class
 #[cfg(test)]
-mod test{
+mod test {
+    use super::dice_system::*;
+    use super::enemy::*;
+    use super::graph_system;
+    use super::player::*;
     use array2d::Array2D;
     use dialogue_factory::*;
-    use graph_system::*;
-    use super::graph_system;
-    use super::dice_system::*;
     use dice::dice::roll;
-    use super::player::*;
-    use super::enemy::*;
-    use super::player_dice_system::*;
+    use graph_system::*;
 
     #[test]
-    fn test_init_player_entity_factory(){
+    fn test_init_player_entity_factory() {
         let dialogue_fact = DialogueFactory {};
-        let dialogue_npc_factory = AbstractDialogueFactory::create_name_text_dialogue(&dialogue_fact); 
-        
+        let dialogue_npc_factory =
+            AbstractDialogueFactory::create_name_text_dialogue(&dialogue_fact);
+
         let npc_name = dialogue_npc_factory.name_dialogue(String::from("Bobby"));
         let name = String::from("Bobby");
 
@@ -350,11 +570,11 @@ mod test{
     }
 
     #[test]
-    fn test_gen_matrix (){
-        let mut graph_base = graph_system::AdjMatrixGraph{
+    fn test_gen_matrix() {
+        let mut graph_base = graph_system::AdjMatrixGraph {
             num_vertices: 0,
             directed: false,
-            matrix: Array2D::filled_with(0, 0, 0)
+            matrix: Array2D::filled_with(0, 0, 0),
         };
 
         graph_base.gen_empty_matrix(5);
@@ -363,8 +583,8 @@ mod test{
     }
 
     #[test]
-    fn test_add_edge(){
-        let mut graph_base = graph_system::AdjMatrixGraph{
+    fn test_add_edge() {
+        let mut graph_base = graph_system::AdjMatrixGraph {
             num_vertices: 5,
             directed: false,
             matrix: Array2D::filled_with(0, 0, 0),
@@ -376,18 +596,29 @@ mod test{
         graph_base.add_edge(2, 3, 14);
         graph_base.add_edge(0, 2, 51);
 
-        assert_eq!(graph_base.get_edge_weight(0, 1).unwrap_or(&0), Some(5).as_ref().unwrap_or(&0));
+        assert_eq!(
+            graph_base.get_edge_weight(0, 1).unwrap_or(&0),
+            Some(5).as_ref().unwrap_or(&0)
+        );
         assert_eq!(graph_base.get_adj_vertices(0), vec![1, 2]);
         assert_eq!(graph_base.get_adj_vertices(2), vec![0, 1, 3]);
-        println!("what is edge weight? {:?}", graph_base.get_edge_weight(0, 1).unwrap_or(&0));
-        println!("what are the adj vertices for 0? {:?}", graph_base.get_adj_vertices(0));
-        println!("what are the adj vertices for 2? {:?}", graph_base.get_adj_vertices(2));
-
+        println!(
+            "what is edge weight? {:?}",
+            graph_base.get_edge_weight(0, 1).unwrap_or(&0)
+        );
+        println!(
+            "what are the adj vertices for 0? {:?}",
+            graph_base.get_adj_vertices(0)
+        );
+        println!(
+            "what are the adj vertices for 2? {:?}",
+            graph_base.get_adj_vertices(2)
+        );
     }
 
     #[test]
-    fn test_num_of_vertices() { 
-        let mut graph_base = graph_system::AdjMatrixGraph{
+    fn test_num_of_vertices() {
+        let mut graph_base = graph_system::AdjMatrixGraph {
             num_vertices: 4,
             directed: false,
             matrix: Array2D::filled_with(0, 0, 0),
@@ -406,7 +637,7 @@ mod test{
 
     #[test]
     fn test_get_edge_weight() {
-        let mut graph_base = graph_system::AdjMatrixGraph{
+        let mut graph_base = graph_system::AdjMatrixGraph {
             num_vertices: 4,
             directed: false,
             matrix: Array2D::filled_with(0, 0, 0),
@@ -425,7 +656,7 @@ mod test{
 
     #[test]
     fn test_roll_result_from_struct() {
-        let dice = DiceEventSystem{
+        let dice = DiceEventSystem {
             dice_event: roll("1d20"),
         };
 
@@ -437,11 +668,11 @@ mod test{
 
     #[test]
     fn test_roll_for_event() {
-        let event_dice = DiceEventSystem{
+        let event_dice = DiceEventSystem {
             dice_event: roll("1d20"),
         };
 
-        let mut graph_base = graph_system::AdjMatrixGraph{
+        let mut graph_base = graph_system::AdjMatrixGraph {
             num_vertices: 0,
             directed: false,
             matrix: Array2D::filled_with(0, 0, 0),
@@ -454,41 +685,58 @@ mod test{
         graph_base.add_edge(1, 3, event_dice.dice_event.total as u32);
         graph_base.add_edge(0, 2, event_dice.dice_event.total as u32);
 
-        assert_eq!(graph_base.get_edge_weight(0, 1), Some(&(event_dice.dice_event.total as u32)));
-        assert_eq!(graph_base.get_edge_weight(1, 2), Some(&(event_dice.dice_event.total as u32)));
-        assert_eq!(graph_base.get_edge_weight(2, 3), Some(&(event_dice.dice_event.total as u32)));
-        assert_eq!(graph_base.get_edge_weight(1, 3), Some(&(event_dice.dice_event.total as u32)));
-        assert_eq!(graph_base.get_edge_weight(0, 2), Some(&(event_dice.dice_event.total as u32)));
-    
+        assert_eq!(
+            graph_base.get_edge_weight(0, 1),
+            Some(&(event_dice.dice_event.total as u32))
+        );
+        assert_eq!(
+            graph_base.get_edge_weight(1, 2),
+            Some(&(event_dice.dice_event.total as u32))
+        );
+        assert_eq!(
+            graph_base.get_edge_weight(2, 3),
+            Some(&(event_dice.dice_event.total as u32))
+        );
+        assert_eq!(
+            graph_base.get_edge_weight(1, 3),
+            Some(&(event_dice.dice_event.total as u32))
+        );
+        assert_eq!(
+            graph_base.get_edge_weight(0, 2),
+            Some(&(event_dice.dice_event.total as u32))
+        );
+
         assert_eq!(graph_base.get_adj_vertices(0), vec![1, 2]);
         assert_eq!(graph_base.get_adj_vertices(2), vec![0, 1, 3]);
-        println!("what are the adj vertices for 0? {:?}", graph_base.get_adj_vertices(0));
-        println!("what are the adj vertices for 2? {:?}", graph_base.get_adj_vertices(2));
+        println!(
+            "what are the adj vertices for 0? {:?}",
+            graph_base.get_adj_vertices(0)
+        );
+        println!(
+            "what are the adj vertices for 2? {:?}",
+            graph_base.get_adj_vertices(2)
+        );
     }
 
     #[test]
     fn test_basic_roll_for_attack() {
-        let player_info = PlayerName{
-            player_name: String::from("Ariel")
+        let player_info = PlayerName {
+            player_name: String::from("Ariel"),
         };
 
-        let mut player_health = PlayerHealth{
-            player_hp: 25
-        };
+        let mut player_health = PlayerHealth { player_hp: 25 };
 
-        let mut player_attack_dice = DiceAttackSystem{
+        let mut player_attack_dice = DiceAttackSystem {
             dice_attack: roll("1d20"),
         };
 
-        let enemy_info = EnemyName{
-            enemy_name: String::from("Mufaba")
+        let enemy_info = EnemyName {
+            enemy_name: String::from("Mufaba"),
         };
 
-        let mut enemy_health = EnemyHealth{
-            enemy_hp: 25
-        };
+        let mut enemy_health = EnemyHealth { enemy_hp: 25 };
 
-        let mut enemy_attck_dice = DiceAttackSystem{
+        let mut enemy_attck_dice = DiceAttackSystem {
             dice_attack: roll("1d20"),
         };
 
@@ -505,8 +753,8 @@ mod test{
         player_health.player_hp = player_hp_attacked_result as u32;
         enemy_health.enemy_hp = enemy_hp_attacked_result as u32;
 
-        println!("the player hp result: {:?}", player_hp_attacked_result); 
-        println!("the enemy hp result: {:?}", enemy_hp_attacked_result); 
+        println!("the player hp result: {:?}", player_hp_attacked_result);
+        println!("the enemy hp result: {:?}", enemy_hp_attacked_result);
 
         assert_ne!(attack_result, 0);
         assert_ne!(enemy_attack_result, 0);
@@ -518,35 +766,31 @@ mod test{
 
     #[test]
     fn test_basic_roll_for_agility() {
-        let player_info = PlayerName{
-            player_name: String::from("Ariel")
+        let player_info = PlayerName {
+            player_name: String::from("Ariel"),
         };
 
-        let mut player_health = PlayerHealth{
-            player_hp: 25
-        };
+        let mut player_health = PlayerHealth { player_hp: 25 };
 
-        let mut player_attack_dice = DiceAttackSystem{
+        let mut player_attack_dice = DiceAttackSystem {
             dice_attack: roll("1d20"),
         };
 
-        let mut player_agility_dice = DiceAgilitySystem{
+        let mut player_agility_dice = DiceAgilitySystem {
             dice_agility: roll("1d20"),
         };
 
-        let enemy_info = EnemyName{
-            enemy_name: String::from("Mufaba")
+        let enemy_info = EnemyName {
+            enemy_name: String::from("Mufaba"),
         };
 
-        let mut enemy_health = EnemyHealth{
-            enemy_hp: 25
-        };
+        let mut enemy_health = EnemyHealth { enemy_hp: 25 };
 
-        let mut enemy_attck_dice = DiceAttackSystem{
+        let mut enemy_attck_dice = DiceAttackSystem {
             dice_attack: roll("1d20"),
         };
 
-        let mut enemy_agility_dice = DiceAgilitySystem{
+        let mut enemy_agility_dice = DiceAgilitySystem {
             dice_agility: roll("1d20"),
         };
 
@@ -565,7 +809,7 @@ mod test{
         println!("get the enemy agility result, {:?}", enemy_agility_result);
 
         let player_hp_attacked_result;
-        // guard for enemy atk is more than player agi 
+        // guard for enemy atk is more than player agi
         if enemy_attack_result > agility_result {
             // losing hp from the enemy attack dice roll
             player_hp_attacked_result = player_health.player_hp as isize - enemy_attack_result;
@@ -573,7 +817,7 @@ mod test{
             // no result. The enemy's attack missed the player.
             player_hp_attacked_result = 0;
         }
-        
+
         let enemy_hp_attacked_result;
         if attack_result > enemy_agility_result {
             // losing hp from the player attack dice roll
@@ -586,8 +830,8 @@ mod test{
         player_health.player_hp = player_hp_attacked_result as u32;
         enemy_health.enemy_hp = enemy_hp_attacked_result as u32;
 
-        println!("the player hp result: {:?}", player_hp_attacked_result); 
-        println!("the enemy hp result: {:?}", enemy_hp_attacked_result); 
+        println!("the player hp result: {:?}", player_hp_attacked_result);
+        println!("the enemy hp result: {:?}", enemy_hp_attacked_result);
 
         assert_ne!(attack_result, 0);
         assert_ne!(enemy_attack_result, 0);
@@ -603,15 +847,13 @@ mod test{
 
     #[test]
     fn test_basic_roll_for_defense() {
-        let mut player_health = PlayerHealth{
-            player_hp: 25
-        };
+        let mut player_health = PlayerHealth { player_hp: 25 };
 
-        let mut player_defense_equip = PlayerDef{
+        let mut player_defense_equip = PlayerDef {
             equip_defense_val: 10,
         };
 
-        let mut enemy_attck_dice = DiceAttackSystem{
+        let mut enemy_attck_dice = DiceAttackSystem {
             dice_attack: roll("1d20"),
         };
 
@@ -624,21 +866,26 @@ mod test{
 
         println!("get the enemy attack result, {:?}", enemy_attack_result);
 
-        println!("what is the player defense result? {:?}", player_defense_result);
+        println!(
+            "what is the player defense result? {:?}",
+            player_defense_result
+        );
 
         let player_hp_attacked_result;
-        // guard for enemy atk with an equip 
+        // guard for enemy atk with an equip
         if *player_defense_result == 0 {
             // losing hp from the enemy attack dice roll
             player_hp_attacked_result = player_health.player_hp as isize - enemy_attack_result;
         } else {
             // the player's health is protected by the defense equip.
-            player_hp_attacked_result = player_health.player_hp as isize + *player_defense_result as isize - enemy_attack_result;
+            player_hp_attacked_result = player_health.player_hp as isize
+                + *player_defense_result as isize
+                - enemy_attack_result;
         }
-        
+
         player_health.player_hp = player_hp_attacked_result as u32;
 
-        println!("the player hp result: {:?}", player_hp_attacked_result); 
+        println!("the player hp result: {:?}", player_hp_attacked_result);
 
         assert_ne!(player_hp_attacked_result, 0);
         assert_ne!(enemy_attack_result, 0);
@@ -649,11 +896,11 @@ mod test{
 
     #[test]
     fn test_basic_roll_for_tech() {
-        let player_info = PlayerName{
-            player_name: String::from("Ariel")
+        let player_info = PlayerName {
+            player_name: String::from("Ariel"),
         };
 
-        let mut player_tech_dice = DiceTechSystem{
+        let mut player_tech_dice = DiceTechSystem {
             dice_tech: roll("1d20"),
         };
 
@@ -663,16 +910,16 @@ mod test{
 
         let ration_machine_tech_def = 0;
         let player_tech_result;
-        // guard for enemy atk is more than player agi 
+        // guard for enemy atk is more than player agi
         if tech_result > ration_machine_tech_def {
             // hacked a machine using hack tech
-            player_tech_result =  String::from("ration machine hacked!");
+            player_tech_result = String::from("ration machine hacked!");
         } else {
             // hack tech failed
             player_tech_result = String::from("tech failed!");
         }
-        
-        println!("the player tech result: {:?}", player_tech_result); 
+
+        println!("the player tech result: {:?}", player_tech_result);
 
         assert_eq!(player_tech_result, "ration machine hacked!");
         assert_eq!(player_info.player_name, String::from("Ariel"));
@@ -680,8 +927,8 @@ mod test{
 
     #[test]
     fn test_set_and_get_player_name() {
-        let player_info = PlayerName{
-            player_name: String::from("Ariel")
+        let player_info = PlayerName {
+            player_name: String::from("Ariel"),
         };
 
         let name = player_info.get_player_name();
@@ -690,14 +937,14 @@ mod test{
 
         assert_eq!(name, String::from("Ariel"));
 
-        let mut player_set_info = PlayerName{
-            player_name: String::from("None")
+        let mut player_set_info = PlayerName {
+            player_name: String::from("None"),
         };
 
         player_set_info.set_player_name(String::from("Bob"));
 
         let get_name = player_set_info.get_player_name();
-        
+
         println!("{:?}", get_name);
         assert_eq!(get_name, String::from("Bob"));
     }

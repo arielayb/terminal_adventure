@@ -1,14 +1,14 @@
 use crate::states::*;
 use bevy::{
-    core_pipeline::{
-        bloom::BloomSettings,
-        tonemapping::Tonemapping,
-    },
+    color::palettes::css::WHITE,
+    post_process::{bloom::Bloom},
     prelude::*,
 };
 use std::process;
 
+#[derive(Default, Component)]
 pub struct MainMenu;
+
 impl Plugin for MainMenu {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::TitleMenu), title_scene)
@@ -35,31 +35,12 @@ struct Options {
 struct OnMenuScreen;
 
 fn title_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let text_style = TextStyle {
-        font: asset_server.load("fonts/alphacorsa.personal-use.ttf"),
-        font_size: 60.0,
-        color: Color::WHITE,
-    };
+    commands.spawn((Name::new("main Menu"), Camera2d, IsDefaultUiCamera,
+    Bloom::NATURAL, OnMenuScreen));
 
     commands.spawn((
-        Camera2dBundle {
-            camera: Camera {
-                hdr: true, // 1. HDR is required for bloom
-                ..default()
-            },
-            tonemapping: Tonemapping::TonyMcMapface, // 2. Using a tonemapper that desaturates to white is recommended
-            ..default()
-        },
-        BloomSettings::default(),
-        OnMenuScreen, // 3. Enable bloom for the camera
-    ));
-
-    commands.spawn((
-        SpriteBundle {
-            texture: asset_server.load("workers/right.png"),
-            transform: Transform::from_xyz(-280., -150., 0.),
-            ..default()
-        },
+        Sprite::from_image(asset_server.load("workers/right.png")),
+        Transform::from_xyz(-280., -150., 0.),
         Selection::Top,
         Options {
             top_sel: true,
@@ -70,38 +51,50 @@ fn title_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
 
     commands.spawn((
-        Text2dBundle {
-            text: Text::from_section("|- TERMINAL OVERLORD -|", text_style.clone()),
-            transform: Transform::from_xyz(5., 100., 0.),
-            ..default()
+        Text2d::new("|- TERMINAL OVERLORD -|"),
+        TextFont {
+            font: asset_server.load("fonts/alphacorsa.personal-use.ttf"),
+            font_size: 60.0,
+            ..Default::default()
         },
+        Transform::from_xyz(5., 100., 0.),
+        TextColor(WHITE.into()),
         OnMenuScreen,
     ));
 
     commands.spawn((
-        Text2dBundle {
-            text: Text::from_section("New Game", text_style.clone()),
-            transform: Transform::from_xyz(-20., -150., 0.),
-            ..default()
+        Text2d::new("New Game"),
+        TextFont {
+            font: asset_server.load("fonts/alphacorsa.personal-use.ttf"),
+            font_size: 60.0,
+            ..Default::default()
         },
+        Transform::from_xyz(-20., -150., 0.),
+        TextColor(WHITE.into()),
         OnMenuScreen,
     ));
 
     commands.spawn((
-        Text2dBundle {
-            text: Text::from_section("Load Save", text_style.clone()),
-            transform: Transform::from_xyz(-20., -250., 0.),
-            ..default()
+        Text2d::new("Load Save"),
+        TextFont {
+            font: asset_server.load("fonts/alphacorsa.personal-use.ttf"),
+            font_size: 60.0,
+            ..Default::default()
         },
+        Transform::from_xyz(-20., -250., 0.),
+        TextColor(WHITE.into()),
         OnMenuScreen,
     ));
 
     commands.spawn((
-        Text2dBundle {
-            text: Text::from_section("Exit", text_style.clone()),
-            transform: Transform::from_xyz(-148., -350., 0.),
-            ..default()
+        Text2d::new("Exit"),
+        TextFont {
+            font: asset_server.load("fonts/alphacorsa.personal-use.ttf"),
+            font_size: 60.0,
+            ..Default::default()
         },
+        Transform::from_xyz(-148., -350., 0.),
+        TextColor(WHITE.into()),
         OnMenuScreen,
     ));
 }
@@ -136,7 +129,8 @@ fn selector(
             }
         }
 
-        if (keys.just_pressed(KeyCode::KeyW) || keys.just_pressed(KeyCode::ArrowUp)) && !opt.top_sel {
+        if (keys.just_pressed(KeyCode::KeyW) || keys.just_pressed(KeyCode::ArrowUp)) && !opt.top_sel
+        {
             *logo = Selection::Top;
             opt.top_sel = true;
             opt.mid_sel = false;
