@@ -8,6 +8,7 @@ use crate::states::*;
 use bevy::post_process::bloom::Bloom;
 use bevy::{prelude::*, camera::ScalingMode};
 // use bevy::render::camera::Viewport;
+use bevy::render::view::Hdr;
 //use bevy::reflect::List;
 use bevy::text::Justify;
 //use bevy::time;
@@ -79,29 +80,13 @@ impl Plugin for EntityLoader {
 
 // setup the world and camera
 fn camera_setup(mut commands: Commands) {
-    let translation: Vec3 = Vec3::new(640.0/4.0, 368.0/4.0, 0.0);
-    commands.spawn((Name::new("Game Camera"), Camera2d::default(), Bloom::NATURAL,
+    commands.spawn((Name::new("Game Camera"), Camera2d, Hdr, Bloom::NATURAL,
         Projection::Orthographic(OrthographicProjection {
-        //     // near: 0.0, 
-        //     // far: 1000.,
-        //     // viewport_origin: Vec2 { x: 1., y: 1. }, 
-            scaling_mode: ScalingMode::WindowSize, 
-            scale: 0.3, 
-            // area: Rect { min: Vec2 { x: 0., y: 0. }, max: Vec2 { x: 256., y: 256. } },
+            scaling_mode: ScalingMode::AutoMax { max_width: 640., max_height: 348. }, 
+            scale: 0.9, 
             ..OrthographicProjection::default_2d() 
         }),
-        
-        // Transform::from_xyz(640., 368., 0.0).looking_at(Vec3{x: 640., y: 348., z: 0.}, Vec3::ZERO),
-        Transform::from_translation(translation).looking_at(Vec3{x: 640., y: 348., z: 0.}, Vec3::ZERO)
     ));
-
-    // commands.spawn((Name::new("Game Camera"), Camera2d::default(), Bloom::NATURAL,
-    //     Projection::Orthographic(OrthographicProjection { 
-    //         scaling_mode: ScalingMode::WindowSize,
-    //         ..OrthographicProjection::default_2d()
-    //     }),
-    //     // Transform::from_translation(translation)
-    // ));
 }
 
 #[derive(Default, Resource)]
