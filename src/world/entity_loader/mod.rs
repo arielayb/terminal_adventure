@@ -7,7 +7,7 @@ use crate::states::*;
 //use bevy::audio::CpalSample;
 use bevy::post_process::bloom::Bloom;
 use bevy::{prelude::*, camera::ScalingMode};
-// use bevy::render::camera::Viewport;
+// use bevy_northstar::prelude::*;
 use bevy::render::view::Hdr;
 //use bevy::reflect::List;
 use bevy::text::Justify;
@@ -61,6 +61,7 @@ impl Plugin for EntityLoader {
         .init_resource::<LevelGrounds>()
         .init_resource::<npc::NpcWalkConfig>()
         .init_resource::<enemy::EnemyWalkConfig>()
+        // .add_plugins(NorthstarPlugin::<CardinalIsoNeighborhood>::default())
         .add_plugins(TextPopupPlugin)
         .add_systems(
             Update,
@@ -68,6 +69,7 @@ impl Plugin for EntityLoader {
                 update_camera,
                 player_control,
                 move_npc,
+                move_enemy,
                 translate_grid_coords_entities,
                 cache_wall_locations,
                 npc_interact,
@@ -328,7 +330,7 @@ fn move_npc(
     }
 }
 
-/*fn move_enemy(
+fn move_enemy(
     time: Res<Time>,
     mut player_pos: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
     mut enemy_pos: Query<&mut GridCoords, With<enemy::Enemy>>,
@@ -340,7 +342,6 @@ fn move_npc(
 
     // tick the timer
     enemy_timer.walk_timer.tick(time.delta());
-    // let mut player_coords = player_pos.single_mut();
 
     let mut player_position = Box::new(GridCoords { x: 0, y: 0 });
 
@@ -348,35 +349,35 @@ fn move_npc(
         *player_position = GridCoords {
             x: player_place.player_position.x,
             y: player_place.player_position.y,
-        }
-    }
+        };
+    
+        for mut enemy_grid_coords in enemy_pos.iter_mut() {
 
-    for mut enemy_grid_coords in enemy_pos.iter_mut() {
+            let testvarx :i32 = enemy_grid_coords.x;
+            let testvary :i32 = enemy_grid_coords.y;
+            println!("the testvarx destination: enemy posx {:?}, enemy posy {:?}", &testvarx, &testvary);
 
-        //for dest in result.unwrap().iter_mut() {
-        //let testvarx :i32 = dest.0;
-        //     let testvary :i32 = dest.1;
-        //     println!("the testvarx destination: enemy posx {:?}, enemy posy {:?}", &testvarx, &testvary);
+            // let start = Point::new(enemy_grid_coords.x, enemy_grid_coords.y);
+            // let end = Point::new(player_position.x, player_position.y);
 
-        //let start = Point::new(enemy_grid_coords.x, enemy_grid_coords.y);
-        //let end = Point::new(player_position.x, player_position.y);
-        /*let mut path = pathing_grid
-            .get_path_single_goal(start, end, false)
-            .unwrap();
-        println!("Path:");
-
-        for dest in path.iter_mut() {
-            println!("{:?}", dest);
-            let movement_direction = GridCoords::new(dest.x, dest.y);
-            if enemy_timer.walk_timer.finished() {
-                let enemy_destination = *enemy_grid_coords + movement_direction;
+            
+            let player_direction = GridCoords::new(player_position.x, player_position.y);
+            let enemy_direction = GridCoords::new(enemy_grid_coords.x, enemy_grid_coords.y);
+            // let new_dir = enemy_direction - player_direction; // this makes the enemy run away from the player?!
+            let new_dir = player_direction - enemy_direction;
+            
+            if enemy_timer.walk_timer.is_finished() {
+                *enemy_grid_coords = GridCoords::new(new_dir.x, new_dir.y);
+                let enemy_destination: GridCoords = *enemy_grid_coords + enemy_direction;
                 if !level_walls.in_wall(&enemy_destination) {
                     *enemy_grid_coords = enemy_destination;
                 }
             }
-        }*/
+
+
+        }
     }
-}*/
+}
 
 // Load all entities
 fn translate_grid_coords_entities(
