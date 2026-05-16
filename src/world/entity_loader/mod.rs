@@ -341,15 +341,15 @@ fn move_enemy(
     // let enemy_y: i32 = enemy_pos.single_mut().y;
 
     // tick the timer
+    
+    // let mut player_position = Box::new(GridCoords { x: 0, y: 0 });
     enemy_timer.walk_timer.tick(time.delta());
 
-    let mut player_position = Box::new(GridCoords { x: 0, y: 0 });
-
     for player_place in player_pos.iter_mut() {
-        *player_position = GridCoords {
-            x: player_place.player_position.x,
-            y: player_place.player_position.y,
-        };
+        // *player_position = GridCoords {
+        //     x: player_place.player_position.x,
+        //     y: player_place.player_position.y,
+        // };
     
         for mut enemy_grid_coords in enemy_pos.iter_mut() {
 
@@ -360,33 +360,29 @@ fn move_enemy(
             // let start = Point::new(enemy_grid_coords.x, enemy_grid_coords.y);
             // let end = Point::new(player_position.x, player_position.y);
 
-            
-            let player_direction = GridCoords::new(player_position.x, player_position.y);
-            let enemy_direction = GridCoords::new(enemy_grid_coords.x, enemy_grid_coords.y);
+            // let enemy_direction = GridCoords::new(enemy_grid_coords.x, enemy_grid_coords.y);
+            // let player_direction = GridCoords::new(player_position.x, player_position.y);
             // let new_dir = enemy_direction - player_direction; // this makes the enemy run away from the player?!
             // let new_dir = player_direction - enemy_direction;
-            
             if enemy_timer.walk_timer.is_finished() {
-                if enemy_grid_coords.x < player_position.x { 
+                if enemy_grid_coords.x < player_place.player_position.x { 
                     enemy_grid_coords.x += 1;
-                } else if enemy_grid_coords.x > player_position.x { 
+                } else if enemy_grid_coords.x > player_place.player_position.x { 
                     enemy_grid_coords.x -= 1; 
                 }
-                else if enemy_grid_coords.y < player_position.y { 
+                else if enemy_grid_coords.y < player_place.player_position.y { 
                     enemy_grid_coords.y += 1; 
                 }
-                else if enemy_grid_coords.y > player_position.y { 
+                else if enemy_grid_coords.y > player_place.player_position.y { 
                     enemy_grid_coords.y -= 1; 
                 }
                 
-                // *enemy_grid_coords = GridCoords::new(new_dir.x, new_dir.y);
-                let enemy_destination: GridCoords = *enemy_grid_coords + enemy_direction;
+                let enemy_direction = GridCoords::new(enemy_grid_coords.x, enemy_grid_coords.y);            
+                let enemy_destination= *enemy_grid_coords + enemy_direction;
                 if !level_walls.in_wall(&enemy_destination) {
                     *enemy_grid_coords = enemy_destination;
                 }
             }
-
-
         }
     }
 }
