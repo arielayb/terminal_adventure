@@ -364,10 +364,22 @@ fn move_enemy(
             let player_direction = GridCoords::new(player_position.x, player_position.y);
             let enemy_direction = GridCoords::new(enemy_grid_coords.x, enemy_grid_coords.y);
             // let new_dir = enemy_direction - player_direction; // this makes the enemy run away from the player?!
-            let new_dir = player_direction - enemy_direction;
+            // let new_dir = player_direction - enemy_direction;
             
             if enemy_timer.walk_timer.is_finished() {
-                *enemy_grid_coords = GridCoords::new(new_dir.x, new_dir.y);
+                if enemy_grid_coords.x < player_position.x { 
+                    enemy_grid_coords.x += 1;
+                } else if enemy_grid_coords.x > player_position.x { 
+                    enemy_grid_coords.x -= 1; 
+                }
+                else if enemy_grid_coords.y < player_position.y { 
+                    enemy_grid_coords.y += 1; 
+                }
+                else if enemy_grid_coords.y > player_position.y { 
+                    enemy_grid_coords.y -= 1; 
+                }
+                
+                // *enemy_grid_coords = GridCoords::new(new_dir.x, new_dir.y);
                 let enemy_destination: GridCoords = *enemy_grid_coords + enemy_direction;
                 if !level_walls.in_wall(&enemy_destination) {
                     *enemy_grid_coords = enemy_destination;
