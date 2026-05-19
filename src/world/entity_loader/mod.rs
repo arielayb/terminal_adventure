@@ -337,20 +337,9 @@ fn move_enemy(
     mut enemy_timer: ResMut<enemy::EnemyWalkConfig>,
     level_walls: Res<LevelWalls>,
 ) {
-    // let enemy_x: i32 = enemy_pos.single_mut().x;
-    // let enemy_y: i32 = enemy_pos.single_mut().y;
-
-    // tick the timer
-    
-    // let mut player_position = Box::new(GridCoords { x: 0, y: 0 });
     enemy_timer.walk_timer.tick(time.delta());
 
     for player_place in player_pos.iter_mut() {
-        // *player_position = GridCoords {
-        //     x: player_place.player_position.x,
-        //     y: player_place.player_position.y,
-        // };
-    
         for mut enemy_grid_coords in enemy_pos.iter_mut() {
 
             let testvarx :i32 = enemy_grid_coords.x;
@@ -377,11 +366,11 @@ fn move_enemy(
                     enemy_grid_coords.y -= 1; 
                 }
                 
-                let enemy_direction = GridCoords::new(enemy_grid_coords.x, enemy_grid_coords.y);            
-                let enemy_destination= *enemy_grid_coords + enemy_direction;
-                if !level_walls.in_wall(&enemy_destination) {
-                    *enemy_grid_coords = enemy_destination;
-                }
+                // let enemy_direction = GridCoords::new(enemy_grid_coords.x, enemy_grid_coords.y);            
+                // let enemy_destination= *enemy_grid_coords + enemy_direction;
+                // if !level_walls.in_wall(&enemy_destination) {
+                //     *enemy_grid_coords = enemy_destination;
+                // }
             }
         }
     }
