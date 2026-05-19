@@ -342,9 +342,9 @@ fn move_enemy(
     for player_place in player_pos.iter_mut() {
         for mut enemy_grid_coords in enemy_pos.iter_mut() {
 
-            let testvarx :i32 = enemy_grid_coords.x;
-            let testvary :i32 = enemy_grid_coords.y;
-            println!("the testvarx destination: enemy posx {:?}, enemy posy {:?}", &testvarx, &testvary);
+            // let testvarx :i32 = enemy_grid_coords.x;
+            // let testvary :i32 = enemy_grid_coords.y;
+            // println!("the testvarx destination: enemy posx {:?}, enemy posy {:?}", &testvarx, &testvary);
 
             // let start = Point::new(enemy_grid_coords.x, enemy_grid_coords.y);
             // let end = Point::new(player_position.x, player_position.y);
