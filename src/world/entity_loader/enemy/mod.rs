@@ -19,6 +19,11 @@ impl EnemyName {
     }
 }
 
+#[derive(Default, Component, Debug)]
+pub struct EnemyPosition {
+    pub enemy_position: Box<GridCoords>,
+}
+
 #[derive(Default, Component, Clone, Debug)]
 pub struct EnemyHealth {
     pub enemy_hp: u32,
