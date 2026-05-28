@@ -248,6 +248,9 @@ fn spawn_enemy(mut commands: Commands) {
         enemy::EnemyName {
             enemy_name: first_name,
         },
+        enemy::EnemyPosition  {
+            enemy_position: Box::new(GridCoords { x: 24, y: 16 })
+        },
         enemy::EnemyDialogue {
             dialogue: arr_dialogue[i].to_string(),
         },
@@ -333,47 +336,39 @@ fn move_npc(
 fn move_enemy(
     time: Res<Time>,
     mut player_pos: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
-    mut enemy_pos: Query<&mut GridCoords, With<enemy::Enemy>>,
+    mut enemy: Query<&mut GridCoords, With<enemy::Enemy>>,
+    mut enemy_pos: Query<&mut enemy::EnemyPosition, With<enemy::EnemyPosition>>,
     mut enemy_timer: ResMut<enemy::EnemyWalkConfig>,
     level_walls: Res<LevelWalls>,
-) {
+) ->  Result {
     enemy_timer.walk_timer.tick(time.delta());
 
     for player_place in player_pos.iter_mut() {
-        for mut enemy_grid_coords in enemy_pos.iter_mut() {
-
-            // let testvarx :i32 = enemy_grid_coords.x;
-            // let testvary :i32 = enemy_grid_coords.y;
-            // println!("the testvarx destination: enemy posx {:?}, enemy posy {:?}", &testvarx, &testvary);
-
-            // let start = Point::new(enemy_grid_coords.x, enemy_grid_coords.y);
-            // let end = Point::new(player_position.x, player_position.y);
-
-            // let enemy_direction = GridCoords::new(enemy_grid_coords.x, enemy_grid_coords.y);
-            // let player_direction = GridCoords::new(player_position.x, player_position.y);
-            // let new_dir = enemy_direction - player_direction; // this makes the enemy run away from the player?!
-            // let new_dir = player_direction - enemy_direction;
+        for mut enemy_grid_coords in enemy.iter_mut() {
+            let mut enemy_coords = enemy_pos.single_mut()?;
             if enemy_timer.walk_timer.is_finished() {
-                if enemy_grid_coords.x < player_place.player_position.x { 
-                    enemy_grid_coords.x += 1;
-                } else if enemy_grid_coords.x > player_place.player_position.x { 
-                    enemy_grid_coords.x -= 1; 
-                }
-                else if enemy_grid_coords.y < player_place.player_position.y { 
-                    enemy_grid_coords.y += 1; 
-                }
-                else if enemy_grid_coords.y > player_place.player_position.y { 
-                    enemy_grid_coords.y -= 1; 
-                }
+                let enemy_movement: GridCoords = 
+                    if enemy_grid_coords.x < player_place.player_position.x { 
+                        GridCoords::new( 1, 0)
+                    }else if enemy_grid_coords.x > player_place.player_position.x { 
+                        GridCoords::new( -1, 0)
+                    }else if enemy_grid_coords.y < player_place.player_position.y { 
+                        GridCoords::new( 0, 1)
+                    }else if enemy_grid_coords.y > player_place.player_position.y { 
+                        GridCoords::new( 0, -1)
+                    } else {
+                        return Ok(());
+                    };
                 
-                // let enemy_direction = GridCoords::new(enemy_grid_coords.x, enemy_grid_coords.y);            
-                // let enemy_destination= *enemy_grid_coords + enemy_direction;
-                // if !level_walls.in_wall(&enemy_destination) {
-                //     *enemy_grid_coords = enemy_destination;
-                // }
+                let enemy_destination= *enemy_grid_coords + enemy_movement;
+                *enemy_coords.enemy_position = enemy_destination;
+                if !level_walls.in_wall(&enemy_destination) {
+                    *enemy_grid_coords = enemy_destination;
+                }
             }
         }
     }
+    Ok(())
 }
 
 // Load all entities
