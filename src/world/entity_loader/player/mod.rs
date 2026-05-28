@@ -14,16 +14,6 @@ pub struct PlayerPosition {
     pub player_position: Box<GridCoords>,
 }
 
-// impl PlayerPosition {
-//     pub fn set_player_position(&mut self, player_position: Box<GridCoords>) {
-//         self.player_position = player_position;
-//     }
-
-//     pub fn get_player_position(&mut self) -> Box<GridCoords> {
-//         return *self.player_position;
-//     }
-// }
-
 impl PlayerName {
     pub fn set_player_name(&mut self, name: String) {
         self.player_name = name;
