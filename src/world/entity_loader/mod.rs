@@ -151,21 +151,18 @@ fn spawn_player(mut commands: Commands) {
     let temp_lp: u32 = 1;
     let temp_st: u32 = 5;
 
-    // let player_setup = player::PlayerPosition {
-    //     player_position: GridCoords::new(15, 11),
-    // };
+    //init the player bundle struct
+    let mut player_bundle =  player::PlayerBundle {
+            player_entity: player::Player,
+            ..Default::default()
+    };
 
-    // let player_setup = Box<GridCoords>(GridCoords {
-    //     x: 15,
-    //     y: 11,
-    // });
+    //get the default player position
+    let player_pos = player_bundle.get_default_coords().player_position;
 
     commands
         .spawn((
-            player::PlayerBundle {
-                player_entity: player::Player,
-                ..Default::default()
-            },
+            player_bundle,
             player::PlayerName {
                 player_name: temp_name,
             },
@@ -187,7 +184,7 @@ fn spawn_player(mut commands: Commands) {
                 attack_enemy: false,
             },
             player::PlayerPosition {
-                player_position: Box::new(GridCoords { x: 15, y: 11 }),
+                player_position: player_pos,
             },
         ));
 }
@@ -206,13 +203,22 @@ fn spawn_npc(mut commands: Commands) {
     let mut rng = rand::rng();
     let i: usize = rng.random_range(0..=4);
 
-    commands.spawn((
-        npc::NpcBundle {
+    //init the npc bundle struct
+    let mut npc_bundle =  npc::NpcBundle {
             npc: npc::Npc,
             ..Default::default()
-        },
+    };
+
+    //get the default npc position
+    let npc_pos = npc_bundle.get_default_coords().npc_position;
+
+    commands.spawn((
+        npc_bundle,
         npc::NpcName {
             npc_name: first_name,
+        },
+        npc::NpcPosition {
+            npc_position: npc_pos
         },
         npc::NpcDialogue {
             dialogue: arr_dialogue[i].to_string(),
@@ -240,16 +246,22 @@ fn spawn_enemy(mut commands: Commands) {
     let mut rng = rand::rng();
     let i: usize = rng.random_range(0..=4);
 
-    commands.spawn((
-        enemy::EnemyBundle {
+     //init the enemy bundle struct
+    let mut enemy_bundle =  enemy::EnemyBundle {
             enemy_entity: enemy::Enemy,
             ..Default::default()
-        },
+    };
+
+    //get the default enemy position
+    let enemy_pos = enemy_bundle.get_default_coords().enemy_position;
+
+    commands.spawn((
+        enemy_bundle,
         enemy::EnemyName {
             enemy_name: first_name,
         },
         enemy::EnemyPosition  {
-            enemy_position: Box::new(GridCoords { x: 24, y: 16 })
+            enemy_position: enemy_pos
         },
         enemy::EnemyDialogue {
             dialogue: arr_dialogue[i].to_string(),
@@ -310,27 +322,29 @@ fn player_control(
 fn move_npc(
     time: Res<Time>,
     mut npc: Query<&mut GridCoords, With<npc::Npc>>,
+    mut npc_pos: Query<&mut npc::NpcPosition, With<npc::NpcPosition>>,
     mut npc_timer: ResMut<npc::NpcWalkConfig>,
     level_walls: Res<LevelWalls>,
-) {
+) -> Result {
     let mut rng = rand::rng();
 
     let x: i32 = rng.random_range(-1..=1);
     let y: i32 = rng.random_range(-1..=1);
-
     // tick the timer
     npc_timer.walk_timer.tick(time.delta());
-
-    let movement_direction = GridCoords::new(x, y);
-
+    
     for mut npc_grid_coords in npc.iter_mut() {
+        let movement_direction = GridCoords::new(x, y);
+        let mut npc_pos_coords = npc_pos.single_mut()?;
         if npc_timer.walk_timer.is_finished() {
             let destination = *npc_grid_coords + movement_direction;
+            *npc_pos_coords.npc_position = destination;
             if !level_walls.in_wall(&destination) {
                 *npc_grid_coords = destination;
             }
         }
     }
+    Ok(())
 }
 
 fn move_enemy(
@@ -429,10 +443,8 @@ fn npc_interact(
         .any(|(player_grid_coords, npc_grid_coords)| player_grid_coords == npc_grid_coords)
     {
         info!("Npc collision detected...");
-        //let mut rng = thread_rng();
         let touch = player_event.single_mut()?;
-        //let n: usize = rng.gen_range(0..=4);
-
+        
         if touch.interact {
             info!("<<< NPC interaction >>>");
             // println!("{}", npc.single_mut().1.clone().get_npc_name());

@@ -154,6 +154,16 @@ pub struct PlayerBundle {
     pub grid_coords: GridCoords,
 }
 
+impl PlayerBundle {
+    pub fn get_default_coords(&mut self) -> PlayerPosition {
+        let player_pos = PlayerPosition {
+            player_position: Box::new(GridCoords { x: self.grid_coords.x, y: self.grid_coords.y })
+        };
+        
+        return player_pos;
+    }
+}
+
 #[derive(Default, Component, Debug)]
 pub struct PlayerEvents {
     pub interact: bool,

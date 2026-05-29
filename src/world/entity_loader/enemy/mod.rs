@@ -83,6 +83,16 @@ pub struct EnemyBundle {
     pub grid_coords: GridCoords,
 }
 
+impl EnemyBundle {
+    pub fn get_default_coords(&mut self) -> EnemyPosition {
+        let enemy_pos = EnemyPosition {
+            enemy_position: Box::new(GridCoords { x: self.grid_coords.x, y: self.grid_coords.y })
+        };
+        
+        return enemy_pos;
+    }
+}
+
 #[derive(Default, Component, Clone, Debug)]
 pub struct EnemyEvents {
     pub interact: bool,
