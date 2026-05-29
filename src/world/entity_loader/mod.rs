@@ -67,12 +67,12 @@ impl Plugin for EntityLoader {
             Update,
             (
                 update_camera,
-                player_control,
+                npc_interact,
                 move_npc,
                 move_enemy,
+                player_control,
                 translate_grid_coords_entities,
                 cache_wall_locations,
-                npc_interact,
             )
                 .chain(),
         )
@@ -430,25 +430,23 @@ fn cache_wall_locations(
 
 fn npc_interact(
     asset_server: Res<AssetServer>,
-    players: Query<&GridCoords, With<player::Player>>,
+    players: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
     mut text_popup_events: MessageWriter<TextPopupEvent>,
     mut player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
-    npc_coords: Query<&GridCoords, With<npc::Npc>>,
+    npc_coords: Query<&mut npc::NpcPosition, With<npc::NpcPosition>>,
     mut npc_name: Query<&npc::NpcName, With<npc::NpcName>>,
     mut npc_dialogue: Query<&npc::NpcDialogue, With<npc::NpcDialogue>>,
 ) -> Result {
     if players
         .iter()
         .zip(npc_coords.iter())
-        .any(|(player_grid_coords, npc_grid_coords)| player_grid_coords == npc_grid_coords)
+        .any(|(player_grid_coords, npc_grid_coords)| player_grid_coords.player_position == npc_grid_coords.npc_position)
     {
         info!("Npc collision detected...");
         let touch = player_event.single_mut()?;
         
         if touch.interact {
             info!("<<< NPC interaction >>>");
-            // println!("{}", npc.single_mut().1.clone().get_npc_name());
-            // text_popup_events.send(TextPopupEvent {
             text_popup_events.write(TextPopupEvent {
                 content: format!(
                     "{} : \n{}",
