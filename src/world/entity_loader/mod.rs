@@ -7,15 +7,21 @@ use crate::states::*;
 //use bevy::audio::CpalSample;
 use bevy::post_process::bloom::Bloom;
 use bevy::{prelude::*, camera::ScalingMode};
+// use bevy_northstar::prelude::*;
 use bevy::render::view::Hdr;
+//use bevy::reflect::List;
 use bevy::text::Justify;
 //use bevy::time;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_text_popup::{
     TextPopupButton, TextPopupEvent, TextPopupLocation, TextPopupPlugin, TextPopupTimeout,
 };
+//use grid_util::grid::Grid;
+use grid_util::point::Point;
 use name_maker::Gender;
 use name_maker::RandomNameGenerator;
+// use pathfinding::prelude::{bfs, Grid};
+use rand::Rng;
 use std::collections::HashSet;
 //use std::collections::VecDeque;
 //use std::thread::current;
@@ -424,15 +430,12 @@ fn cache_wall_locations(
 
 fn npc_interact(
     asset_server: Res<AssetServer>,
-    mut input: ResMut<ButtonInput<KeyCode>>,
-    mut next_state: ResMut<NextState<GameState>>,
+    players: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
+    mut text_popup_events: MessageWriter<TextPopupEvent>,
+    mut player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
     npc_coords: Query<&mut npc::NpcPosition, With<npc::NpcPosition>>,
     mut npc_name: Query<&npc::NpcName, With<npc::NpcName>>,
     mut npc_dialogue: Query<&npc::NpcDialogue, With<npc::NpcDialogue>>,
-    players: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
-    mut player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
-    mut text_popup_events: MessageWriter<TextPopupEvent>,
-    mut time: ResMut<Time<Virtual>>
 ) -> Result {
     if players
         .iter()
@@ -444,9 +447,6 @@ fn npc_interact(
         
         if touch.interact {
             info!("<<< NPC interaction >>>");
-            next_state.set(GameState::Dialog);
-            time.pause();
-            input.reset_all();
             text_popup_events.write(TextPopupEvent {
                 content: format!(
                     "{} : \n{}",
@@ -463,12 +463,9 @@ fn npc_interact(
                 //border_color: BorderColor::linear_rgb(100., 100., 100.),
                 border_color: Color::linear_rgb(100., 100., 100.).into(),
                 //modal: BackgroundColor(Color::BLACK),
-                // timeout: TextPopupTimeout::Seconds(5),
-                
+                timeout: TextPopupTimeout::Seconds(5),
                 ..default()
             });
-            next_state.set(GameState::Running);
-            time.unpause();
         }
     }
     Ok(())
