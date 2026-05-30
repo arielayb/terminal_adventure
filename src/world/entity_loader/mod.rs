@@ -13,6 +13,8 @@ use bevy_ecs_ldtk::prelude::*;
 use bevy_text_popup::{
     TextPopupButton, TextPopupEvent, TextPopupLocation, TextPopupPlugin, TextPopupTimeout,
 };
+//use grid_util::grid::Grid;
+use grid_util::point::Point;
 use name_maker::Gender;
 use name_maker::RandomNameGenerator;
 use rand::RngExt;
@@ -421,12 +423,15 @@ fn cache_wall_locations(
 
 fn npc_interact(
     asset_server: Res<AssetServer>,
-    players: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
-    mut text_popup_events: MessageWriter<TextPopupEvent>,
-    mut player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
+    mut input: ResMut<ButtonInput<KeyCode>>,
+    mut next_state: ResMut<NextState<GameState>>,
     npc_coords: Query<&mut npc::NpcPosition, With<npc::NpcPosition>>,
     mut npc_name: Query<&npc::NpcName, With<npc::NpcName>>,
-    mut npc_dialogue: Query<&npc::NpcDialogue, With<npc::NpcDialogue>>
+    mut npc_dialogue: Query<&npc::NpcDialogue, With<npc::NpcDialogue>>,
+    players: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
+    mut player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
+    mut text_popup_events: MessageWriter<TextPopupEvent>,
+    mut time: ResMut<Time<Virtual>>
 ) -> Result {
     if players
         .iter()
@@ -438,6 +443,9 @@ fn npc_interact(
         
         if touch.interact {
             info!("<<< NPC interaction >>>");
+            next_state.set(GameState::Dialogue);
+            time.pause();
+            input.reset_all();
             text_popup_events.write(TextPopupEvent {
                 content: format!(
                     "{} : \n{}",
@@ -457,6 +465,8 @@ fn npc_interact(
                 timeout: TextPopupTimeout::Seconds(5),
                 ..default()
             });
+            next_state.set(GameState::Running);
+            time.unpause();
         }
     }
     Ok(())

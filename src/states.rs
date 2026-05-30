@@ -6,6 +6,7 @@ pub enum GameState {
     TitleMenu,
     Running,
     LoadAssets,
+    Dialogue,
 }
 
 // #[derive(SubStates, Default, Debug, Clone, PartialEq, Eq, Hash)]
