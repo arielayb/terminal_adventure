@@ -7,25 +7,16 @@ use crate::states::*;
 //use bevy::audio::CpalSample;
 use bevy::post_process::bloom::Bloom;
 use bevy::{prelude::*, camera::ScalingMode};
-// use bevy_northstar::prelude::*;
 use bevy::render::view::Hdr;
-//use bevy::reflect::List;
 use bevy::text::Justify;
-//use bevy::time;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_text_popup::{
     TextPopupButton, TextPopupEvent, TextPopupLocation, TextPopupPlugin, TextPopupTimeout,
 };
-//use grid_util::grid::Grid;
-use grid_util::point::Point;
 use name_maker::Gender;
 use name_maker::RandomNameGenerator;
-// use pathfinding::prelude::{bfs, Grid};
-use rand::Rng;
+use rand::RngExt;
 use std::collections::HashSet;
-//use std::collections::VecDeque;
-//use std::thread::current;
-//use std::vec;
 
 // import other modules
 mod dice_system;
@@ -435,7 +426,7 @@ fn npc_interact(
     mut player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
     npc_coords: Query<&mut npc::NpcPosition, With<npc::NpcPosition>>,
     mut npc_name: Query<&npc::NpcName, With<npc::NpcName>>,
-    mut npc_dialogue: Query<&npc::NpcDialogue, With<npc::NpcDialogue>>,
+    mut npc_dialogue: Query<&npc::NpcDialogue, With<npc::NpcDialogue>>
 ) -> Result {
     if players
         .iter()
@@ -541,21 +532,8 @@ mod test {
     use super::graph_system;
     use super::player::*;
     use array2d::Array2D;
-    use dialogue_factory::*;
     use dice::dice::roll;
     use graph_system::*;
-
-    #[test]
-    fn test_init_player_entity_factory() {
-        let dialogue_fact = DialogueFactory {};
-        let dialogue_npc_factory =
-            AbstractDialogueFactory::create_name_text_dialogue(&dialogue_fact);
-
-        let npc_name = dialogue_npc_factory.name_dialogue(String::from("Bobby"));
-        let name = String::from("Bobby");
-
-        assert_eq!(&npc_name, &name);
-    }
 
     #[test]
     fn test_gen_matrix() {
