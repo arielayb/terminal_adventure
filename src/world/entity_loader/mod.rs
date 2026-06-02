@@ -13,8 +13,6 @@ use bevy_ecs_ldtk::prelude::*;
 use bevy_text_popup::{
     TextPopupButton, TextPopupEvent, TextPopupLocation, TextPopupPlugin, TextPopupTimeout,
 };
-//use grid_util::grid::Grid;
-use grid_util::point::Point;
 use name_maker::Gender;
 use name_maker::RandomNameGenerator;
 use rand::RngExt;
@@ -31,6 +29,16 @@ mod player_dice_system;
 // Tag component used to tag entities added on the game screen
 #[derive(Component)]
 struct OnGameScreen;
+
+#[derive(Default, Resource)]
+struct DialogueTimer(bevy::time::Time);
+
+impl Command(Result) for DialogueTimer {
+    fn apply(self, world: &mut World) -> Result {
+        world.get_resource_or_insert_with(|| DialogueTimer(bevy::time::Time<Virtual>));        
+        Ok(())
+    }
+}
 
 // This plugin will contain the game.
 #[derive(Default, Component)]
@@ -431,7 +439,7 @@ fn npc_interact(
     players: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
     mut player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
     mut text_popup_events: MessageWriter<TextPopupEvent>,
-    mut time: ResMut<Time<Virtual>>
+    mut timer: ResMut<Time<Virtual>>
 ) -> Result {
     if players
         .iter()
@@ -444,9 +452,10 @@ fn npc_interact(
         if touch.interact {
             info!("<<< NPC interaction >>>");
             next_state.set(GameState::Dialogue);
-            time.pause();
-            input.reset_all();
-            text_popup_events.write(TextPopupEvent {
+            // timer.pause();
+            input.clear();
+
+            let event = TextPopupEvent {
                 content: format!(
                     "{} : \n{}",
                     npc_name.single_mut()?.npc_name.to_string(),
@@ -459,14 +468,39 @@ fn npc_interact(
                 },
                 location: TextPopupLocation::Bottom,
                 text_alignment: Justify::Left,
-                //border_color: BorderColor::linear_rgb(100., 100., 100.),
                 border_color: Color::linear_rgb(100., 100., 100.).into(),
-                //modal: BackgroundColor(Color::BLACK),
-                timeout: TextPopupTimeout::Seconds(5),
+                dismiss_button: Some(TextPopupButton {
+                    text: "OK".to_string(),
+                    text_font: TextFont {
+                        font: asset_server.load("fonts/Fortine-Regular.otf"),
+                        font_size: 20.,
+                        ..Default::default()
+                    },
+                    text_color: Color::BLACK.into(),
+                    background_color: Color::WHITE.into(),
+                    action: |commands, root_entity| {
+                        // Fire event to spawn a new popup when user clicks 'OK'.
+                        // commands.queue(|world: &mut World| {
+                        //     world.send_event(TextPopupEvent {
+                        //         content: "New Popup Generated".to_string(),
+                        //         location: TextPopupLocation::Bottom,
+                        //         ..Default::default()
+                        //     });
+                        // });
+                        // Despawn the original popup.
+                        commands.queue(|world: &mut World| {
+                            let timer = world.get_resource_or_insert_with(DialogueTimer{}.pause_world());
+
+                        });
+                        commands.entity(root_entity).despawn();
+                    },
+                    ..Default::default()
+                }),
                 ..default()
-            });
+            };
+            timer.unpause();
+            text_popup_events.write(event);
             next_state.set(GameState::Running);
-            time.unpause();
         }
     }
     Ok(())
