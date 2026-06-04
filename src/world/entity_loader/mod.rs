@@ -31,14 +31,7 @@ mod player_dice_system;
 struct OnGameScreen;
 
 #[derive(Default, Resource)]
-struct DialogueTimer(bevy::time::Time);
-
-impl Command(Result) for DialogueTimer {
-    fn apply(self, world: &mut World) -> Result {
-        world.get_resource_or_insert_with(|| DialogueTimer(bevy::time::Time<Virtual>));        
-        Ok(())
-    }
-}
+struct PlayerInteraction(GameState);
 
 // This plugin will contain the game.
 #[derive(Default, Component)]
@@ -68,10 +61,10 @@ impl Plugin for EntityLoader {
             Update,
             (
                 update_camera,
-                npc_interact,
-                move_npc,
-                move_enemy,
-                player_control,
+                npc_interact.run_if(in_state(GameState::Running)),
+                move_npc.run_if(in_state(GameState::Running)),
+                move_enemy.run_if(in_state(GameState::Running)),
+                player_control.run_if(in_state(GameState::Running)),
                 translate_grid_coords_entities,
                 cache_wall_locations,
             )
@@ -431,7 +424,7 @@ fn cache_wall_locations(
 
 fn npc_interact(
     asset_server: Res<AssetServer>,
-    mut input: ResMut<ButtonInput<KeyCode>>,
+    current_state: Res<State<GameState>>, 
     mut next_state: ResMut<NextState<GameState>>,
     npc_coords: Query<&mut npc::NpcPosition, With<npc::NpcPosition>>,
     mut npc_name: Query<&npc::NpcName, With<npc::NpcName>>,
@@ -439,7 +432,6 @@ fn npc_interact(
     players: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
     mut player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
     mut text_popup_events: MessageWriter<TextPopupEvent>,
-    mut timer: ResMut<Time<Virtual>>
 ) -> Result {
     if players
         .iter()
@@ -452,8 +444,6 @@ fn npc_interact(
         if touch.interact {
             info!("<<< NPC interaction >>>");
             next_state.set(GameState::Dialogue);
-            // timer.pause();
-            input.clear();
 
             let event = TextPopupEvent {
                 content: format!(
@@ -479,18 +469,10 @@ fn npc_interact(
                     text_color: Color::BLACK.into(),
                     background_color: Color::WHITE.into(),
                     action: |commands, root_entity| {
-                        // Fire event to spawn a new popup when user clicks 'OK'.
-                        // commands.queue(|world: &mut World| {
-                        //     world.send_event(TextPopupEvent {
-                        //         content: "New Popup Generated".to_string(),
-                        //         location: TextPopupLocation::Bottom,
-                        //         ..Default::default()
-                        //     });
-                        // });
-                        // Despawn the original popup.
                         commands.queue(|world: &mut World| {
-                            let timer = world.get_resource_or_insert_with(DialogueTimer{}.pause_world());
-
+                            // world.get_resource_or_insert_with(|| PlayerInteraction(GameState::Running));
+                            world.get_resource_or_init::<PlayerInteraction>();
+                            
                         });
                         commands.entity(root_entity).despawn();
                     },
@@ -498,9 +480,8 @@ fn npc_interact(
                 }),
                 ..default()
             };
-            timer.unpause();
             text_popup_events.write(event);
-            next_state.set(GameState::Running);
+            // current_state.get();
         }
     }
     Ok(())
