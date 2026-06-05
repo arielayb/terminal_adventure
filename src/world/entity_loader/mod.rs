@@ -65,6 +65,7 @@ impl Plugin for EntityLoader {
                 move_npc.run_if(in_state(GameState::Running)),
                 move_enemy.run_if(in_state(GameState::Running)),
                 player_control.run_if(in_state(GameState::Running)),
+                player_pause,
                 translate_grid_coords_entities,
                 cache_wall_locations,
             )
@@ -263,12 +264,30 @@ fn spawn_enemy(mut commands: Commands) {
     ));
 }
 
+fn player_pause(
+    current_state: Res<State<GameState>>, 
+    input: Res<ButtonInput<KeyCode>>,
+    mut next_state: ResMut<NextState<GameState>>,
+) -> Result {
+    if input.just_pressed(KeyCode::Escape) {
+       match current_state.get() {
+            GameState::Running => next_state.set(GameState::Pause),
+            GameState::Pause => next_state.set(GameState::Running),
+            _ => {},
+       }
+    }
+
+    Ok(())
+}
+
 fn player_control(
+    current_state: Res<State<GameState>>, 
+    input: Res<ButtonInput<KeyCode>>,
+    level_walls: Res<LevelWalls>,
+    mut next_state: ResMut<NextState<GameState>>,
     mut players: Query<&mut GridCoords, With<player::Player>>,
     mut player_pos: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
     mut player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
-    input: Res<ButtonInput<KeyCode>>,
-    level_walls: Res<LevelWalls>,
 ) -> Result {
     if input.just_pressed(KeyCode::KeyE) {
         info!("e key pressed");
@@ -278,6 +297,14 @@ fn player_control(
     } else if input.just_released(KeyCode::KeyE) {
         let mut touch = player_event.single_mut()?;
         touch.interact = false;
+    }
+
+    if input.just_pressed(KeyCode::Escape) {
+       match current_state.get() {
+            GameState::Running => next_state.set(GameState::Pause),
+            GameState::Pause => next_state.set(GameState::Running),
+            _ => unreachable!(),
+       }
     }
 
     let movement_direction =
@@ -470,8 +497,7 @@ fn npc_interact(
                     background_color: Color::WHITE.into(),
                     action: |commands, root_entity| {
                         commands.queue(|world: &mut World| {
-                            // world.get_resource_or_insert_with(|| PlayerInteraction(GameState::Running));
-                            world.get_resource_or_init::<PlayerInteraction>();
+                            world.get_resource_or_insert_with(|| PlayerInteraction(GameState::Running));
                             
                         });
                         commands.entity(root_entity).despawn();
@@ -481,7 +507,7 @@ fn npc_interact(
                 ..default()
             };
             text_popup_events.write(event);
-            // current_state.get();
+            println!("we got here!!!!!!");
         }
     }
     Ok(())
