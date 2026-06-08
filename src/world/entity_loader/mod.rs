@@ -145,8 +145,6 @@ fn spawn_player(mut commands: Commands) {
             player::PlayerLuck { player_lp: temp_lp },
             player::PlayerTech { player_tp: temp_tp },
             player::PlayerStr { player_sp: temp_st },
-        ))
-        .insert((
             player::PlayerEvents {
                 interact: false,
                 attack_enemy: false,
@@ -443,7 +441,9 @@ fn npc_interact(
         
         if touch.interact {
             info!("<<< NPC interaction >>>");
-            next_state.set(PausedState::Paused);
+            if *current_state.get() == PausedState::Unpaused {
+                next_state.set(PausedState::Paused);
+            }
 
             let event = TextPopupEvent {
                 content: format!(
@@ -471,7 +471,6 @@ fn npc_interact(
                     action: |commands, root_entity| {
                         commands.queue(|world: &mut World| {
                             world.get_resource_or_insert_with(|| PlayerInteraction(PausedState::Unpaused));
-                            
                         });
                         commands.entity(root_entity).despawn();
                     },
