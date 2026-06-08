@@ -31,7 +31,7 @@ mod player_dice_system;
 struct OnGameScreen;
 
 #[derive(Default, Resource)]
-struct PlayerInteraction(GameState);
+struct PlayerInteraction(PausedState);
 
 // This plugin will contain the game.
 #[derive(Default, Component)]
@@ -50,9 +50,7 @@ impl Plugin for EntityLoader {
         .register_ldtk_entity::<player::PlayerBundle>("Player")
         .register_ldtk_int_cell_for_layer::<WallBundle>("Walls", 1)
         .register_ldtk_int_cell_for_layer::<WallBundle>("Water", 1)
-        .register_ldtk_int_cell_for_layer::<GroundBundle>("Ground", 1)
         .init_resource::<LevelWalls>()
-        .init_resource::<LevelGrounds>()
         .init_resource::<npc::NpcWalkConfig>()
         .init_resource::<enemy::EnemyWalkConfig>()
         // .add_plugins(NorthstarPlugin::<CardinalIsoNeighborhood>::default())
@@ -61,13 +59,13 @@ impl Plugin for EntityLoader {
             Update,
             (
                 update_camera,
-                npc_interact.run_if(in_state(GameState::Running)),
-                move_npc.run_if(in_state(GameState::Running)),
-                move_enemy.run_if(in_state(GameState::Running)),
-                player_control.run_if(in_state(GameState::Running)),
-                player_pause,
-                translate_grid_coords_entities,
+                npc_interact.run_if(in_state(PausedState::Unpaused)),
+                move_npc.run_if(in_state(PausedState::Unpaused)),
+                move_enemy.run_if(in_state(PausedState::Unpaused)),
+                player_control.run_if(in_state(PausedState::Unpaused)),
                 cache_wall_locations,
+                translate_grid_coords_entities,
+                player_pause,
             )
                 .chain(),
         )
@@ -103,37 +101,12 @@ impl LevelWalls {
     }
 }
 
-#[derive(Default, Resource)]
-struct LevelGrounds {
-    ground_locations: HashSet<GridCoords>,
-    level_width: i32,
-    level_height: i32,
-}
-
-impl LevelGrounds {
-    fn in_wall(&self, grid_coords: &GridCoords) -> bool {
-        grid_coords.x < 0
-            || grid_coords.y < 0
-            || grid_coords.x >= self.level_width
-            || grid_coords.y >= self.level_height
-            || self.ground_locations.contains(grid_coords)
-    }
-}
-
 #[derive(Default, Component)]
 struct Wall;
 
 #[derive(Default, Bundle, LdtkIntCell)]
 struct WallBundle {
     wall: Wall,
-}
-
-#[derive(Default, Component)]
-struct Ground;
-
-#[derive(Default, Bundle, LdtkIntCell)]
-struct GroundBundle {
-    ground: Ground,
 }
 
 fn spawn_player(mut commands: Commands) {
@@ -265,15 +238,14 @@ fn spawn_enemy(mut commands: Commands) {
 }
 
 fn player_pause(
-    current_state: Res<State<GameState>>, 
+    current_state: Res<State<PausedState>>, 
     input: Res<ButtonInput<KeyCode>>,
-    mut next_state: ResMut<NextState<GameState>>,
+    mut next_state: ResMut<NextState<PausedState>>,
 ) -> Result {
     if input.just_pressed(KeyCode::Escape) {
        match current_state.get() {
-            GameState::Running => next_state.set(GameState::Pause),
-            GameState::Pause => next_state.set(GameState::Running),
-            _ => {},
+            PausedState::Unpaused => next_state.set(PausedState::Paused),
+            PausedState::Paused => next_state.set(PausedState::Unpaused),
        }
     }
 
@@ -419,11 +391,11 @@ fn translate_grid_coords_entities(
 }
 
 fn cache_wall_locations(
+    ldtk_project_entities: Query<&LdtkProjectHandle>,
+    ldtk_project_assets: Res<Assets<LdtkProject>>,
     mut level_walls: ResMut<LevelWalls>,
     mut level_events: MessageReader<LevelEvent>,
     walls: Query<&GridCoords, With<Wall>>,
-    ldtk_project_entities: Query<&LdtkProjectHandle>,
-    ldtk_project_assets: Res<Assets<LdtkProject>>,
 ) -> Result {
     const GRID_SIZE: i32 = 16;
     for level_event in level_events.read() {
@@ -431,6 +403,7 @@ fn cache_wall_locations(
             let ldtk_project = ldtk_project_assets
                 .get(ldtk_project_entities.single()?)
                 .expect("LdtkProject should be loaded when level is spawned");
+
             let level = ldtk_project
                 .get_raw_level_by_iid(level_iid.get())
                 .expect("spawned level should exist in project");
@@ -451,8 +424,8 @@ fn cache_wall_locations(
 
 fn npc_interact(
     asset_server: Res<AssetServer>,
-    current_state: Res<State<GameState>>, 
-    mut next_state: ResMut<NextState<GameState>>,
+    current_state: Res<State<PausedState>>, 
+    mut next_state: ResMut<NextState<PausedState>>,
     npc_coords: Query<&mut npc::NpcPosition, With<npc::NpcPosition>>,
     mut npc_name: Query<&npc::NpcName, With<npc::NpcName>>,
     mut npc_dialogue: Query<&npc::NpcDialogue, With<npc::NpcDialogue>>,
@@ -470,7 +443,7 @@ fn npc_interact(
         
         if touch.interact {
             info!("<<< NPC interaction >>>");
-            next_state.set(GameState::Dialogue);
+            next_state.set(PausedState::Paused);
 
             let event = TextPopupEvent {
                 content: format!(
@@ -497,7 +470,7 @@ fn npc_interact(
                     background_color: Color::WHITE.into(),
                     action: |commands, root_entity| {
                         commands.queue(|world: &mut World| {
-                            world.get_resource_or_insert_with(|| PlayerInteraction(GameState::Running));
+                            world.get_resource_or_insert_with(|| PlayerInteraction(PausedState::Unpaused));
                             
                         });
                         commands.entity(root_entity).despawn();

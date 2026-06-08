@@ -15,8 +15,8 @@ pub enum GameState {
 #[derive(Debug, Default, States, Clone, Eq, PartialEq, Hash)]
 pub enum PausedState {
     #[default]
-    Paused,
     Unpaused,
+    Paused,
 }
 
 // Generic system that takes a component as a parameter, and will despawn all entities with that component
