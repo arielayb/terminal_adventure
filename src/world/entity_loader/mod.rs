@@ -66,8 +66,7 @@ impl Plugin for EntityLoader {
                 cache_wall_locations,
                 translate_grid_coords_entities,
                 player_pause,
-            )
-                .chain(),
+            ).chain(),
         )
         .add_systems(OnExit(GameState::Running), despawn_screen::<OnGameScreen>);
     }
@@ -251,10 +250,8 @@ fn player_pause(
 }
 
 fn player_control(
-    current_state: Res<State<GameState>>, 
     input: Res<ButtonInput<KeyCode>>,
     level_walls: Res<LevelWalls>,
-    mut next_state: ResMut<NextState<GameState>>,
     mut players: Query<&mut GridCoords, With<player::Player>>,
     mut player_pos: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
     mut player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
@@ -267,14 +264,6 @@ fn player_control(
     } else if input.just_released(KeyCode::KeyE) {
         let mut touch = player_event.single_mut()?;
         touch.interact = false;
-    }
-
-    if input.just_pressed(KeyCode::Escape) {
-       match current_state.get() {
-            GameState::Running => next_state.set(GameState::Pause),
-            GameState::Pause => next_state.set(GameState::Running),
-            _ => unreachable!(),
-       }
     }
 
     let movement_direction =
@@ -389,8 +378,8 @@ fn translate_grid_coords_entities(
 }
 
 fn cache_wall_locations(
-    ldtk_project_entities: Query<&LdtkProjectHandle>,
     ldtk_project_assets: Res<Assets<LdtkProject>>,
+    ldtk_project_entities: Query<&LdtkProjectHandle>,
     mut level_walls: ResMut<LevelWalls>,
     mut level_events: MessageReader<LevelEvent>,
     walls: Query<&GridCoords, With<Wall>>,
