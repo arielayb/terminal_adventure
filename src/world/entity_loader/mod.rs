@@ -31,7 +31,7 @@ mod player_dice_system;
 struct OnGameScreen;
 
 #[derive(Default, Resource)]
-struct PlayerInteraction(PausedState);
+struct PlayerInteraction(NextState<PausedState>);
 
 // This plugin will contain the game.
 #[derive(Default, Component)]
@@ -411,7 +411,6 @@ fn cache_wall_locations(
 
 fn npc_interact(
     asset_server: Res<AssetServer>,
-    current_state: Res<State<PausedState>>, 
     mut next_state: ResMut<NextState<PausedState>>,
     npc_coords: Query<&mut npc::NpcPosition, With<npc::NpcPosition>>,
     mut npc_name: Query<&npc::NpcName, With<npc::NpcName>>,
@@ -430,9 +429,7 @@ fn npc_interact(
         
         if touch.interact {
             info!("<<< NPC interaction >>>");
-            if *current_state.get() == PausedState::Unpaused {
-                next_state.set(PausedState::Paused);
-            }
+            next_state.set(PausedState::Paused);
 
             let event = TextPopupEvent {
                 content: format!(
@@ -448,7 +445,7 @@ fn npc_interact(
                 location: TextPopupLocation::Bottom,
                 text_alignment: Justify::Left,
                 border_color: Color::linear_rgb(100., 100., 100.).into(),
-                dismiss_button: Some(TextPopupButton {
+                confirm_button: Some(TextPopupButton {
                     text: "OK".to_string(),
                     text_font: TextFont {
                         font: asset_server.load("fonts/Fortine-Regular.otf"),
@@ -459,7 +456,10 @@ fn npc_interact(
                     background_color: Color::WHITE.into(),
                     action: |commands, root_entity| {
                         commands.queue(|world: &mut World| {
-                            world.get_resource_or_insert_with(|| PlayerInteraction(PausedState::Unpaused));
+                            let mut test = world.get_resource_or_insert_with(
+                                || PlayerInteraction(NextState::Pending(PausedState::Unpaused))
+                            );
+                            test.0.set(PausedState::Unpaused);
                         });
                         commands.entity(root_entity).despawn();
                     },
