@@ -11,7 +11,7 @@ use bevy::render::view::Hdr;
 use bevy::text::Justify;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_text_popup::{
-    TextPopupButton, TextPopupEvent, TextPopupLocation, TextPopupPlugin, TextPopupTimeout,
+    TextPopup, TextPopupButton, TextPopupEvent, TextPopupLocation, TextPopupPlugin,
 };
 use name_maker::Gender;
 use name_maker::RandomNameGenerator;
@@ -30,8 +30,10 @@ mod player_dice_system;
 #[derive(Component)]
 struct OnGameScreen;
 
-#[derive(Default, Resource)]
-struct PlayerInteraction(NextState<PausedState>);
+#[derive(Default, Component)]
+struct PlayerInteraction {
+    paused_state: PausedState
+}
 
 // This plugin will contain the game.
 #[derive(Default, Component)]
@@ -66,6 +68,7 @@ impl Plugin for EntityLoader {
                 cache_wall_locations,
                 translate_grid_coords_entities,
                 player_pause,
+                dialogue_event,
             ).chain(),
         )
         .add_systems(OnExit(GameState::Running), despawn_screen::<OnGameScreen>);
@@ -411,7 +414,7 @@ fn cache_wall_locations(
 
 fn npc_interact(
     asset_server: Res<AssetServer>,
-    mut next_state: ResMut<NextState<PausedState>>,
+    // mut next_state: ResMut<NextState<PausedState>>,
     npc_coords: Query<&mut npc::NpcPosition, With<npc::NpcPosition>>,
     mut npc_name: Query<&npc::NpcName, With<npc::NpcName>>,
     mut npc_dialogue: Query<&npc::NpcDialogue, With<npc::NpcDialogue>>,
@@ -429,7 +432,7 @@ fn npc_interact(
         
         if touch.interact {
             info!("<<< NPC interaction >>>");
-            next_state.set(PausedState::Paused);
+            // next_state.set(PausedState::Paused);
 
             let event = TextPopupEvent {
                 content: format!(
@@ -454,16 +457,10 @@ fn npc_interact(
                     },
                     text_color: Color::BLACK.into(),
                     background_color: Color::WHITE.into(),
-                    action: |commands, root_entity| {
-                        commands.queue(|world: &mut World| {
-                            let mut test = world.get_resource_or_insert_with(
-                                || PlayerInteraction(NextState::Pending(PausedState::Unpaused))
-                            );
-                            test.0.set(PausedState::Unpaused);
-                        });
-                        commands.entity(root_entity).despawn();
-                    },
                     ..Default::default()
+                }),
+                custom_component: Some(|entity_commands| {
+                    entity_commands.insert(PlayerInteraction { paused_state: PausedState::Paused});
                 }),
                 ..default()
             };
@@ -533,6 +530,15 @@ fn update_camera(
             transform.translation.x = pos_x as f32 * 15.;
             transform.translation.y = pos_y as f32 * 15.;
         }
+    }
+}
+
+fn dialogue_event(
+    mut event_states: Query<&mut PlayerInteraction, With<TextPopup>>,
+    mut next_state: ResMut<NextState<PausedState>>,
+) {
+    for event_state in event_states.iter_mut() {
+        // next_state.set(event_state.paused_state);
     }
 }
 
