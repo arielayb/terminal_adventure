@@ -7,25 +7,16 @@ use crate::states::*;
 //use bevy::audio::CpalSample;
 use bevy::post_process::bloom::Bloom;
 use bevy::{prelude::*, camera::ScalingMode};
-// use bevy_northstar::prelude::*;
 use bevy::render::view::Hdr;
-//use bevy::reflect::List;
 use bevy::text::Justify;
-//use bevy::time;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_text_popup::{
-    TextPopupButton, TextPopupEvent, TextPopupLocation, TextPopupPlugin, TextPopupTimeout,
+    TextPopup, TextPopupButton, TextPopupEvent, TextPopupLocation, TextPopupPlugin,
 };
-//use grid_util::grid::Grid;
-use grid_util::point::Point;
 use name_maker::Gender;
 use name_maker::RandomNameGenerator;
-// use pathfinding::prelude::{bfs, Grid};
-use rand::Rng;
+use rand::RngExt;
 use std::collections::HashSet;
-//use std::collections::VecDeque;
-//use std::thread::current;
-//use std::vec;
 
 // import other modules
 mod dice_system;
@@ -38,6 +29,21 @@ mod player_dice_system;
 // Tag component used to tag entities added on the game screen
 #[derive(Component)]
 struct OnGameScreen;
+
+#[derive(Component)]
+struct PlayerInteraction {
+    paused_state: PausedState
+}
+
+#[derive(Event)]
+struct Interaction {
+    paused_state: PausedState
+}
+
+#[derive(EntityEvent)]
+struct DialogueInteraction {
+    entity: Entity
+}
 
 // This plugin will contain the game.
 #[derive(Default, Component)]
@@ -56,25 +62,22 @@ impl Plugin for EntityLoader {
         .register_ldtk_entity::<player::PlayerBundle>("Player")
         .register_ldtk_int_cell_for_layer::<WallBundle>("Walls", 1)
         .register_ldtk_int_cell_for_layer::<WallBundle>("Water", 1)
-        .register_ldtk_int_cell_for_layer::<GroundBundle>("Ground", 1)
         .init_resource::<LevelWalls>()
-        .init_resource::<LevelGrounds>()
         .init_resource::<npc::NpcWalkConfig>()
         .init_resource::<enemy::EnemyWalkConfig>()
-        // .add_plugins(NorthstarPlugin::<CardinalIsoNeighborhood>::default())
         .add_plugins(TextPopupPlugin)
         .add_systems(
             Update,
             (
                 update_camera,
-                npc_interact,
-                move_npc,
-                move_enemy,
-                player_control,
-                translate_grid_coords_entities,
+                npc_interact.run_if(in_state(PausedState::Unpaused)),
+                move_npc.run_if(in_state(PausedState::Unpaused)),
+                move_enemy.run_if(in_state(PausedState::Unpaused)),
+                player_control.run_if(in_state(PausedState::Unpaused)),
                 cache_wall_locations,
-            )
-                .chain(),
+                translate_grid_coords_entities,
+                player_pause.run_if(in_state(PausedState::Unpaused)),
+            ).chain(),
         )
         .add_systems(OnExit(GameState::Running), despawn_screen::<OnGameScreen>);
     }
@@ -108,37 +111,12 @@ impl LevelWalls {
     }
 }
 
-#[derive(Default, Resource)]
-struct LevelGrounds {
-    ground_locations: HashSet<GridCoords>,
-    level_width: i32,
-    level_height: i32,
-}
-
-impl LevelGrounds {
-    fn in_wall(&self, grid_coords: &GridCoords) -> bool {
-        grid_coords.x < 0
-            || grid_coords.y < 0
-            || grid_coords.x >= self.level_width
-            || grid_coords.y >= self.level_height
-            || self.ground_locations.contains(grid_coords)
-    }
-}
-
 #[derive(Default, Component)]
 struct Wall;
 
 #[derive(Default, Bundle, LdtkIntCell)]
 struct WallBundle {
     wall: Wall,
-}
-
-#[derive(Default, Component)]
-struct Ground;
-
-#[derive(Default, Bundle, LdtkIntCell)]
-struct GroundBundle {
-    ground: Ground,
 }
 
 fn spawn_player(mut commands: Commands) {
@@ -177,8 +155,6 @@ fn spawn_player(mut commands: Commands) {
             player::PlayerLuck { player_lp: temp_lp },
             player::PlayerTech { player_tp: temp_tp },
             player::PlayerStr { player_sp: temp_st },
-        ))
-        .insert((
             player::PlayerEvents {
                 interact: false,
                 attack_enemy: false,
@@ -269,12 +245,27 @@ fn spawn_enemy(mut commands: Commands) {
     ));
 }
 
+fn player_pause(
+    current_state: Res<State<PausedState>>, 
+    input: Res<ButtonInput<KeyCode>>,
+    mut next_state: ResMut<NextState<PausedState>>,
+) -> Result {
+    if input.just_pressed(KeyCode::Escape) {
+       match current_state.get() {
+            PausedState::Unpaused => next_state.set(PausedState::Paused),
+            PausedState::Paused => next_state.set(PausedState::Unpaused),
+       }
+    }
+
+    Ok(())
+}
+
 fn player_control(
+    input: Res<ButtonInput<KeyCode>>,
+    level_walls: Res<LevelWalls>,
     mut players: Query<&mut GridCoords, With<player::Player>>,
     mut player_pos: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
     mut player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
-    input: Res<ButtonInput<KeyCode>>,
-    level_walls: Res<LevelWalls>,
 ) -> Result {
     if input.just_pressed(KeyCode::KeyE) {
         info!("e key pressed");
@@ -398,11 +389,11 @@ fn translate_grid_coords_entities(
 }
 
 fn cache_wall_locations(
+    ldtk_project_assets: Res<Assets<LdtkProject>>,
+    ldtk_project_entities: Query<&LdtkProjectHandle>,
     mut level_walls: ResMut<LevelWalls>,
     mut level_events: MessageReader<LevelEvent>,
     walls: Query<&GridCoords, With<Wall>>,
-    ldtk_project_entities: Query<&LdtkProjectHandle>,
-    ldtk_project_assets: Res<Assets<LdtkProject>>,
 ) -> Result {
     const GRID_SIZE: i32 = 16;
     for level_event in level_events.read() {
@@ -410,6 +401,7 @@ fn cache_wall_locations(
             let ldtk_project = ldtk_project_assets
                 .get(ldtk_project_entities.single()?)
                 .expect("LdtkProject should be loaded when level is spawned");
+
             let level = ldtk_project
                 .get_raw_level_by_iid(level_iid.get())
                 .expect("spawned level should exist in project");
@@ -430,12 +422,13 @@ fn cache_wall_locations(
 
 fn npc_interact(
     asset_server: Res<AssetServer>,
-    players: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
-    mut text_popup_events: MessageWriter<TextPopupEvent>,
-    mut player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
+    mut next_state: ResMut<NextState<PausedState>>,
     npc_coords: Query<&mut npc::NpcPosition, With<npc::NpcPosition>>,
     mut npc_name: Query<&npc::NpcName, With<npc::NpcName>>,
     mut npc_dialogue: Query<&npc::NpcDialogue, With<npc::NpcDialogue>>,
+    players: Query<&mut player::PlayerPosition, With<player::PlayerPosition>>,
+    mut player_event: Query<&mut player::PlayerEvents, With<player::PlayerEvents>>,
+    mut text_popup_events: MessageWriter<TextPopupEvent>,
 ) -> Result {
     if players
         .iter()
@@ -447,7 +440,9 @@ fn npc_interact(
         
         if touch.interact {
             info!("<<< NPC interaction >>>");
-            text_popup_events.write(TextPopupEvent {
+            next_state.set(PausedState::Paused);
+
+            let event = TextPopupEvent {
                 content: format!(
                     "{} : \n{}",
                     npc_name.single_mut()?.npc_name.to_string(),
@@ -460,12 +455,29 @@ fn npc_interact(
                 },
                 location: TextPopupLocation::Bottom,
                 text_alignment: Justify::Left,
-                //border_color: BorderColor::linear_rgb(100., 100., 100.),
                 border_color: Color::linear_rgb(100., 100., 100.).into(),
-                //modal: BackgroundColor(Color::BLACK),
-                timeout: TextPopupTimeout::Seconds(5),
+                confirm_button: Some(TextPopupButton {
+                    text: "OK".to_string(),
+                    text_font: TextFont {
+                        font: asset_server.load("fonts/Fortine-Regular.otf"),
+                        font_size: 20.,
+                        ..Default::default()
+                    },
+                    text_color: Color::BLACK.into(),
+                    background_color: Color::WHITE.into(),
+                    action: |commands, root_entity| {
+                        // commands.trigger(Interaction { 
+                        //     paused_state: PausedState::Unpaused
+                        // });
+                        // Despawn the original popup.
+                        commands.entity(root_entity).despawn();
+                    },
+                    ..Default::default()
+                }),
                 ..default()
-            });
+            };
+            text_popup_events.write(event);
+            println!("we got here!!!!!!");
         }
     }
     Ok(())
@@ -541,21 +553,8 @@ mod test {
     use super::graph_system;
     use super::player::*;
     use array2d::Array2D;
-    use dialogue_factory::*;
     use dice::dice::roll;
     use graph_system::*;
-
-    #[test]
-    fn test_init_player_entity_factory() {
-        let dialogue_fact = DialogueFactory {};
-        let dialogue_npc_factory =
-            AbstractDialogueFactory::create_name_text_dialogue(&dialogue_fact);
-
-        let npc_name = dialogue_npc_factory.name_dialogue(String::from("Bobby"));
-        let name = String::from("Bobby");
-
-        assert_eq!(&npc_name, &name);
-    }
 
     #[test]
     fn test_gen_matrix() {
